@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Prescripciones de Obra v2.0 - Pamesa Cerámica</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --color-principal: #ce1719;
+            --color-principal-hover: #b51517;
+            --color-secundario: #4a4a4a;
+            --color-secundario-hover: #333333;
+            --color-blanco: #ffffff;
+            --color-texto-principal: #222;
+            --color-texto-secundario: #555;
+            --color-titulos: #000;
+            --color-fondo: #f9fafb;
+            --color-fondo-suave: #f8f8f8;
+            --color-borde-suave: #e5e5e5;
+            --font-main: 'Montserrat', sans-serif;
+            --radio-borde: 8px;
+            --sombra-suave: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            --max-width-container: 1600px;
+        }
+
+        /* --- ESTILOS BASE Y RESET --- */
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: var(--font-main);
+            background-color: var(--color-fondo);
+            color: var(--color-texto-principal);
+            margin: 0;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- CABECERA --- */
+        .header-corporativo {
+            background-color: var(--color-blanco);
+            padding: 15px 30px;
+            border-bottom: 1px solid var(--color-borde-suave);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            z-index: 10;
+            flex-shrink: 0;
+        }
+        .header-container {
+            max-width: var(--max-width-container);
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-corporativo img { height: 35px; width: auto; }
+        .header-corporativo h1 {
+            font-size: 1.4em; color: var(--color-titulos);
+            font-weight: 600; margin: 0; text-align: right;
+        }
+        
+        /* --- ESTRUCTURA PRINCIPAL --- */
+        .main-content { 
+            padding: 30px; 
+            flex-grow: 1;
+            overflow: hidden;
+            display: flex;
+        }
+        .container {
+            display: flex; gap: 30px;
+            max-width: var(--max-width-container);
+            margin: 0 auto;
+            width: 100%;
+            height: 100%;
+        }
+        .panel {
+            background-color: var(--color-blanco);
+            border-radius: var(--radio-borde);
+            box-shadow: var(--sombra-suave);
+            border: 1px solid var(--color-borde-suave);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .formulario-panel { flex: 1; min-width: 400px; max-width: 500px; }
+        .resultado-panel { flex: 2; min-width: 0; }
+        
+        .panel-header {
+            padding: 25px 30px;
+            border-bottom: 1px solid var(--color-borde-suave);
+            flex-shrink: 0;
+            background-color: var(--color-blanco);
+        }
+        .panel-body {
+            padding: 30px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .panel-body::-webkit-scrollbar { width: 8px; }
+        .panel-body::-webkit-scrollbar-track { background: var(--color-fondo-suave); }
+        .panel-body::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 20px; border: 2px solid var(--color-fondo-suave); }
+        .panel-body::-webkit-scrollbar-thumb:hover { background-color: #bbb; }
+
+
+        /* --- ESTILOS FORMULARIO --- */
+        #formulario-busqueda {
+            padding: 30px;
+            border-bottom: 1px solid var(--color-borde-suave);
+            flex-shrink: 0;
+            background: #fcfcfc;
+        }
+        #formulario-campos {
+            padding: 30px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        
+        fieldset {
+            border: 1px solid var(--color-borde-suave);
+            border-radius: var(--radio-borde);
+            padding: 20px;
+            margin: 0 0 25px 0;
+        }
+        legend {
+            font-weight: 600; font-size: 1.1em;
+            color: var(--color-principal);
+            padding: 0 10px; margin-left: -10px;
+        }
+        .campo { margin-bottom: 15px; }
+        .campo label {
+            display: block; margin-bottom: 6px;
+            font-weight: 500; font-size: 0.85em;
+            color: var(--color-texto-secundario);
+        }
+        .campo input, .campo select {
+            width: 100%; padding: 12px;
+            border: 1px solid var(--color-borde-suave);
+            border-radius: 6px; background-color: #fff;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            font-family: var(--font-main); font-size: 0.95em;
+        }
+        .campo input[readonly] {
+            background-color: var(--color-fondo-suave);
+            color: var(--color-texto-secundario);
+            cursor: not-allowed;
+            border-style: dashed;
+        }
+        .campo input:focus, .campo select:focus {
+            outline: none; border-color: var(--color-principal);
+            box-shadow: 0 0 0 3px rgba(206, 23, 25, 0.15);
+        }
+        .buscador-header {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 10px;
+        }
+        
+        .filtros-rapidos { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .filtros-rapidos .filtro-toggle-label {
+            display: inline-block; padding: 8px 16px; border: 1px solid var(--color-borde-suave);
+            border-radius: 20px; font-size: 0.85em; font-weight: 500; cursor: pointer; transition: all 0.2s ease-in-out;
+            background-color: var(--color-fondo-suave); color: var(--color-texto-secundario);
+        }
+        .filtros-rapidos .filtro-toggle-input { display: none; }
+        .filtros-rapidos .filtro-toggle-input:checked + .filtro-toggle-label {
+            background-color: var(--color-principal); color: var(--color-blanco); border-color: var(--color-principal);
+        }
+        .filtros-rapidos .filtro-toggle-label:hover { border-color: var(--color-secundario); }
+        
+        .filtros-avanzados-toggle {
+            background: none; border: none; padding: 5px 0; color: var(--color-principal);
+            font-weight: 600; cursor: pointer; font-size: 0.9em; margin-bottom: 15px;
+        }
+        .filtros-avanzados-toggle::after { content: ' ▼'; }
+        .filtros-avanzados-toggle.open::after { content: ' ▲'; }
+        .filtros-avanzados-content { display: none; padding-top: 10px; border-top: 1px solid var(--color-borde-suave); }
+        #buscador-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+        #status-message { margin-top: 15px; font-style: italic; color: var(--color-texto-secundario); }
+
+        /* --- PANEL RESULTADOS --- */
+        .resultado-acciones {
+            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+            gap: 20px;
+        }
+        .acciones-titulo {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--color-texto-principal); margin: 0;
+        }
+        .grupo-botones { display: flex; flex-wrap: wrap; gap: 10px; }
+        .btn-accion, .link-accion {
+            background-color: var(--color-principal); color: white; border: none; padding: 10px 20px; border-radius: 6px;
+            cursor: pointer; font-weight: 600; font-family: var(--font-main); font-size: 0.9em; text-decoration: none;
+            display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s;
+        }
+        .btn-accion:hover, .link-accion:hover {
+            background-color: var(--color-principal-hover); transform: translateY(-2px); color: white;
+            box-shadow: 0 4px 10px rgba(206, 23, 25, 0.2);
+        }
+        .btn-accion.secundario, .link-accion.secundario { background-color: var(--color-secundario); }
+        .btn-accion.secundario:hover, .link-accion.secundario:hover {
+             background-color: var(--color-secundario-hover); box-shadow: 0 4px 10px rgba(74, 74, 74, 0.2);
+        }
+        .btn-limpiar {
+            background-color: transparent; color: var(--color-principal); border: 1px solid var(--color-principal);
+            padding: 8px 16px; font-size: 0.85em; font-weight: 600; cursor: pointer; border-radius: 6px; transition: all 0.2s;
+        }
+        .btn-limpiar:hover { background-color: var(--color-principal); color: var(--color-blanco); }
+
+        /* --- IMAGEN Y PLACEHOLDER --- */
+        #imagen-producto-container {
+            margin-bottom: 25px;
+        }
+        .image-wrapper {
+            display: flex; flex-direction: column; align-items: center; gap: 15px;
+        }
+        #image-placeholder {
+            width: 100%; height: 250px; border-radius: var(--radio-borde);
+            background-color: var(--color-fondo-suave); border: 2px dashed var(--color-borde-suave);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            color: var(--color-texto-secundario); text-align: center;
+        }
+        #image-placeholder svg { width: 48px; height: 48px; margin-bottom: 10px; opacity: 0.5; }
+        #imagen-producto {
+            max-width: 100%; max-height: 300px; height: auto; border-radius: 0px;
+            border: 1px solid var(--color-borde-suave); box-shadow: var(--sombra-suave); object-fit: cover;
+        }
+
+        /* --- TEXTO Y ESTADO VACÍO --- */
+        #texto-generado {
+            white-space: pre-wrap; word-wrap: break-word;
+            font-family: var(--font-main);
+            background-color: #fdfdfd; padding: 25px; border-radius: var(--radio-borde);
+            border: 1px solid var(--color-borde-suave); min-height: 300px;
+            font-size: 0.95em; line-height: 1.8; color: #333;
+        }
+        #empty-state {
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; color: var(--color-texto-secundario);
+            background-color: #fdfdfd; padding: 50px 25px; border-radius: var(--radio-borde);
+            border: 1px solid var(--color-borde-suave); min-height: 300px;
+        }
+        #empty-state svg { width: 60px; height: 60px; margin-bottom: 15px; opacity: 0.4; }
+        #empty-state h3 { margin: 0 0 10px 0; color: var(--color-texto-principal); }
+        
+        .resaltado { color: var(--color-principal); font-weight: 600; }
+        
+        /* SOLUCIÓN CLAVE: Usar !important para asegurar que el JS sobrescribe cualquier estilo */
+        .oculto { display: none !important; }
+
+        /* --- RESPONSIVIDAD --- */
+        @media (max-width: 1100px) {
+            body { height: auto; overflow: visible; }
+            .main-content { padding: 20px 15px; height: auto; }
+            .container { flex-direction: column; height: auto; }
+            .formulario-panel { max-width: 100%; }
+            .panel { overflow: visible; }
+            .panel-body, #formulario-campos { overflow: visible; }
+        }
+        @media (max-width: 768px) {
+            .header-corporativo { padding: 15px; }
+            .main-content { padding: 20px 15px; }
+            .panel, .panel-header, .panel-body, #formulario-busqueda, #formulario-campos { padding: 20px; }
+            .header-corporativo h1 { font-size: 1.1em; }
+            .header-corporativo img { height: 30px; }
+            .resultado-acciones { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .grupo-botones { width: 100%; }
+            .btn-accion, .link-accion { flex-grow: 1; text-align: center; }
+        }
+        @media (max-width: 600px) {
+            .header-container { flex-direction: column; gap: 10px; }
+            .header-corporativo h1 { text-align: center; }
+            .grupo-dimensiones { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header-corporativo">
+        <div class="header-container">
+            <img src="LOGO-PAMESA.jpg" alt="Logo Pamesa Cerámica" onerror="this.style.display='none'">
+            <h1>Generador de Prescripciones de Obra v2.0</h1>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="panel formulario-panel">
+                <div id="formulario-busqueda">
+                    <fieldset style="margin: 0; padding:0; border: none;">
+                        <div class="buscador-header">
+                            <legend>Búsqueda de Producto</legend>
+                            <button type="button" id="btn-clear-filters" class="btn-limpiar">Limpiar Filtros</button>
+                        </div>
+                        
+                        <div class="campo">
+                            <label>Características Especiales</label>
+                            <div class="filtros-rapidos">
+                                <div><input type="checkbox" id="filtro-20mm" class="filtro-toggle-input"><label for="filtro-20mm" class="filtro-toggle-label">20mm Espesor</label></div>
+                                <div><input type="checkbox" id="filtro-ext" class="filtro-toggle-input"><label for="filtro-ext" class="filtro-toggle-label">Acabado EXT</label></div>
+                                <div><input type="checkbox" id="filtro-dup" class="filtro-toggle-input"><label for="filtro-dup" class="filtro-toggle-label">Modelo DUP</label></div>
+                            </div>
+                        </div>
+
+                        <div id="filtros-principales">
+                             <div class="campo"><label for="search-serie">Serie</label><select id="search-serie" data-csv-col="Serie" disabled><option value="">Todas</option></select></div>
+                             <div class="campo"><label for="search-efecto">Efecto</label><select id="search-efecto" data-csv-col="Efecto" disabled><option value="">Todos</option></select></div>
+                             <div class="campo"><label for="search-color">Color</label><select id="search-color" data-csv-col="COLOR" disabled><option value="">Todos</option></select></div>
+                        </div>
+
+                        <div class="filtros-avanzados-container">
+                             <button type="button" id="filtros-avanzados-toggle" class="filtros-avanzados-toggle">Más filtros</button>
+                             <div id="filtros-avanzados-content" class="filtros-avanzados-content">
+                                <div id="buscador-grid">
+                                    <div class="campo"><label for="search-formato">Formato</label><select id="search-formato" data-csv-col="FORMATO" disabled><option value="">Todos</option></select></div>
+                                    <div class="campo"><label for="search-modelo">Modelo</label><select id="search-modelo" data-csv-col="MODELO" disabled><option value="">Todos</option></select></div>
+                                    <div class="campo"><label for="search-familia">Tipo Material</label><select id="search-familia" data-csv-col="Desc_Familia_web" disabled><option value="">Todos</option></select></div>
+                                    <div class="campo"><label for="search-resbaladicidad">Clase Resbaladicidad</label><select id="search-resbaladicidad" data-csv-col="en_16165_anexo_c_deslizamiento_pendulo" disabled><option value="">Todas</option></select></div>
+                                </div>
+                             </div>
+                        </div>
+
+                        <div class="campo">
+                            <label for="product-selector">Seleccionar Producto</label>
+                            <select id="product-selector" disabled></select>
+                        </div>
+                        <p id="status-message">Por favor, cargue el archivo CSV para empezar.</p>
+                    </fieldset>
+                </div>
+                <div id="formulario-campos" class="panel-body">
+                    <form id="formulario-prescripcion">
+                        <fieldset>
+                            <legend>1. Identificación</legend>
+                            <div class="campo"><label for="tipo_material">Tipo de material</label><input type="text" id="tipo_material" value="" readonly></div>
+                            <div class="campo"><label for="fabricante">Fabricante</label><input type="text" id="fabricante" value="PAMESA CERÁMICA" readonly></div>
+                            <div class="campo"><label for="coleccion">Colección</label><input type="text" id="coleccion" value="" readonly></div>
+                            <div class="campo"><label for="color">Color</label><input type="text" id="color" value="" readonly></div>
+                            <div class="campo"><label for="aspecto">Aspecto / Acabado</label><input type="text" id="aspecto" value="" readonly></div>
+                        </fieldset>
+                        
+                        <fieldset>
+                            <legend>2. Dimensiones</legend>
+                            <div class="campo grupo-dimensiones">
+                                <div><label for="dim_ancho">Ancho (cm)</label><input type="text" id="dim_ancho" value="" readonly></div>
+                                <div><label for="dim_alto" id="label-dim-alto">Alto (cm)</label><input type="text" id="dim_alto" value="" readonly></div>
+                                <div><label for="dim_espesor">Espesor (mm)</label><input type="text" id="dim_espesor" value="" readonly></div>
+                            </div>
+                            <div class="campo"><label for="desviacion">Desviación dimensional máxima (%)</label><input type="text" id="desviacion" value="0,15%" readonly></div>
+                            <div class="campo"><label for="norma_dimensiones">Normativa dimensional</label><input type="text" id="norma_dimensiones" value="UNE-EN ISO10545-2, ISO 13006:2018 UNE-EN 14411:2016" readonly></div>
+                        </fieldset>
+
+                        <fieldset>
+                            <legend>3. Características Técnicas</legend>
+                            <div class="campo"><label for="destonificado">Destonificado</label><input type="text" id="destonificado" value="" readonly></div>
+                            <div class="campo"><label for="absorcion_agua">Absorción de agua (%)</label><input type="text" id="absorcion_agua" value="" readonly></div>
+                            <div class="campo"><label for="clase_resbaladicidad">Clase Resbaladicidad (CTE)</label><input id="clase_resbaladicidad" type="text" value="" readonly></div>
+                            <div class="campo"><label for="valor_rd">Resistencia al deslizamiento (Rd)</label><input type="text" id="valor_rd" value="" readonly></div>
+                            <div class="campo"><label for="uso_transito">Clasificación de uso</label><input type="text" id="uso_transito" value="tránsito intenso" readonly></div>
+                            <div class="campo"><label for="resistencia_manchas">Resistencia a manchas</label><input type="text" id="resistencia_manchas" value="" readonly></div>
+                            <div class="campo"><label for="resistencia_quimica">Resistencia a ataques químicos</label><input type="text" id="resistencia_quimica" value="" readonly></div>
+                            <div class="campo"><label for="modulo_rotura">Módulo de rotura (N/mm²)</label><input type="text" id="modulo_rotura" value="" readonly></div>
+                            <div class="campo"><label for="carga_rotura">Carga de rotura (N)</label><input type="text" id="carga_rotura" value="" readonly></div>
+                        </fieldset>
+
+                        <fieldset>
+                            <legend>4. Materiales de Colocación (Editable)</legend>
+                            <div class="campo"><label for="adhesivo_nombre">Nombre del Adhesivo</label><input type="text" id="adhesivo_nombre" value="MARCA ADHESIVO"></div>
+                            <div class="campo"><label for="adhesivo_fabricante">Fabricante del Adhesivo</label><input type="text" id="adhesivo_fabricante" value="NOMBRE FABRICANTE"></div>
+                            <div class="campo"><label for="adhesivo_tipo">Tipo de Adhesivo (EN 12004)</label><input type="text" id="adhesivo_tipo" value=""></div>
+                            <div class="campo"><label for="mortero_nombre">Nombre del Mortero de Juntas</label><input type="text" id="mortero_nombre" value="MARCA MORTERO"></div>
+                            <div class="campo"><label for="mortero_fabricante">Fabricante del Mortero</label><input type="text" id="mortero_fabricante" value="NOMBRE FABRICANTE"></div>
+                        </fieldset>
+
+                        <fieldset>
+                            <legend>5. Detalles de Ejecución (Editable)</legend>
+                            <div class="campo"><label for="junta_maxima">Ancho máximo de junta (mm)</label><input type="number" id="junta_maxima" value="15"></div>
+                            <div class="campo"><label for="junta_perimetral">Ancho mínimo junta perimetral (mm)</label><input type="number" id="junta_perimetral" value="5"></div>
+                        </fieldset>
+                    </form>
+                </div>
+            </div>
+            <div class="panel resultado-panel">
+                <div class="panel-header">
+                    <div class="resultado-acciones">
+                        <h4 class="acciones-titulo">Prescripción Generada</h4>
+                        <div class="grupo-botones">
+                            <button id="btn-copiar" class="btn-accion">Copiar Texto</button>
+                            <button id="btn-descargar-txt" class="btn-accion">Descargar .txt</button>
+                            <a id="link-dap" href="#" target="_blank" class="link-accion secundario">Ver DAP</a>
+                            <a id="link-dop" href="#" target="_blank" class="link-accion secundario">Ver DoP</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <!-- AQUI ESTABA EL PROBLEMA: El contenedor tiene que estar oculto en la bienvenida -->
+                    <div id="imagen-producto-container" class="oculto">
+                         <div class="image-wrapper">
+                             <div id="image-placeholder">
+                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                                 <span>Imagen de producto no disponible</span>
+                             </div>
+                            <img id="imagen-producto" src="" alt="Imagen del producto seleccionado" class="oculto">
+                            <button id="btn-descargar-imagen" class="btn-accion secundario oculto">Descargar Imagen</button>
+                         </div>
+                    </div>
+                    
+                    <div id="empty-state">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        <h3>Generador de Prescripciones</h3>
+                        <p>1. Cargue el archivo CSV de productos.<br>2. Utilice los filtros para encontrar un producto.<br>3. Seleccione el producto para ver la prescripción.</p>
+                    </div>
+                    <pre id="texto-generado" class="oculto"></pre>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- ELEMENTOS DEL DOM ---
+    const ui = {
+        formulario: document.getElementById('formulario-prescripcion'),
+        output: document.getElementById('texto-generado'),
+        emptyState: document.getElementById('empty-state'),
+        imageContainer: document.getElementById('imagen-producto-container'),
+        // CAMBIO: Ya no necesitamos la referencia al input de archivo
+        // csvFileInput: document.getElementById('csv-file-input'), 
+        productSelector: document.getElementById('product-selector'),
+        statusMessage: document.getElementById('status-message'),
+        btnClearFilters: document.getElementById('btn-clear-filters'),
+        advancedFiltersToggle: document.getElementById('filtros-avanzados-toggle'),
+        advancedFiltersContent: document.getElementById('filtros-avanzados-content'),
+        btnCopiar: document.getElementById('btn-copiar'),
+        btnDescargarTxt: document.getElementById('btn-descargar-txt'),
+        linkDAP: document.getElementById('link-dap'),
+        linkDOP: document.getElementById('link-dop'),
+        imagePlaceholder: document.getElementById('image-placeholder'),
+        imagenProducto: document.getElementById('imagen-producto'),
+        btnDescargarImagen: document.getElementById('btn-descargar-imagen'),
+        quickFilters: Array.from(document.querySelectorAll('.filtro-toggle-input')),
+        allSelectFilters: Array.from(document.querySelectorAll('select[data-csv-col]')).reduce((acc, select) => {
+            acc[select.dataset.csvCol] = select;
+            return acc;
+        }, {})
+    };
+
+    // --- ESTADO DE LA APLICACIÓN ---
+    let csvData = [];
+    const revestimientoTypes = [
+        'Revestimiento pasta blanca no rectificada',
+        'Revestimiento pasta roja no rectificado',
+        'Revestimiento pasta blanca rectificada'
+    ];
+    
+    // Plantillas (sin cambios)
+    const pavimentoTemplate = `Suministro y ejecución de pavimento con <span class="resaltado">{tipo_material}</span>, de aspecto <span class="resaltado">{aspecto}</span>, colección <span class="resaltado">{coleccion}</span>, color <span class="resaltado">{color}</span> de <span class="resaltado">{fabricante}</span>. Conformado por prensado en seco, tratado en monococción a temperatura de 1200ºC.\n\nCerámica con dimensiones nominales de (Ancho x Alto x Espesor) <span class="resaltado">{dim_ancho}</span>x<span class="resaltado">{dim_alto}</span>x<span class="resaltado">{dim_espesor}</span> cm, desviación de longitud/anchura, rectitud de lados, ortogonalidad y planimetría inferior a <span class="resaltado">{desviacion}</span> (<span class="resaltado">{norma_dimensiones}</span>).\n\nDestonificado <span class="resaltado">{destonificado}</span>, con una absorción de agua muy baja <span class="resaltado">{absorcion_agua}</span> según ISO 10545-3. Clasificación de suelos según su resbaladicidad <span class="resaltado">{clase_resbaladicidad}</span> (CTE DBSUA), resistencia al deslizamiento <span class="resaltado">{valor_rd}</span> (UNE 41901:2017 EX). Módulo de rotura <span class="resaltado">{modulo_rotura}</span> (ISO-13006:2018 UNE-EN 14411:2016) y carga de rotura <span class="resaltado">{carga_rotura}</span> según ISO10545-4.\n\nPavimento de <span class="resaltado">{uso_transito}</span> conforme a la clasificación de baldosas según uso de la Guía de la Baldosa Cerámica (Documento reconocido DRB 01/11), resistente al choque térmico, al cuarteo, a la helada, a las manchas <span class="resaltado">{resistencia_manchas}</span>, según ISO 10545-14 y a los ataques químicos: <span class="resaltado">{resistencia_quimica}</span>, según ISO 10545-13.\n\nContribuye a los estándares de construcción sostenible y saludable (LEED, BREEAM, WELL) gracias a disponer de Declaración Ambiental de Producto propia (DAP), no ser una fuente emisora de sustancias peligrosas COV’s ni formaldehidos, así como por disponer de contenido de material reciclado >6%. Disponible marcado CE.\n\nCerámica recibida sobre recrecido cementoso sin calefacción radiante (no incluido), apto para la colocación en capa fina y tránsito previsto, con adhesivo de altas prestaciones con excelente adherencia y deformabilidad, <span class="resaltado">{adhesivo_nombre}</span> de <span class="resaltado">{adhesivo_fabricante}</span>, tipo <span class="resaltado">{adhesivo_tipo}</span>, según EN 12004, prescrito de acuerdo a las indicaciones de la UNE 138002 y rejuntadas con mortero de juntas cementoso de fraguado y endurecimiento rápido, <span class="resaltado">{mortero_nombre}</span> de <span class="resaltado">{mortero_fabricante}</span>, según EN 13888, para juntas de hasta <span class="resaltado">{junta_maxima}</span>cm.\n\nI/p.p medios auxiliares. Utilización de p/p de Crucetas Autonivelantes (no incluidas), formación de juntas perimetrales continuas, de anchura no menor de <span class="resaltado">{junta_perimetral}</span> mm, en los límites con paredes, pilares exentos y elevaciones de nivel y, en su caso, juntas de partición intermedias. Respetar juntas estructurales existentes en el soporte. Incluso limpieza y comprobación del grado de humedad de la base. Replanteo de niveles. Replanteo de la disposición de las baldosas y juntas de movimiento. Aplicación del adhesivo. Colocación de las crucetas. Colocación de las baldosas con llana dentada y doble encolado. Relleno, si procede, de las juntas de partición intermedias. Rejuntado. Eliminación y limpieza del material sobrante. Limpieza inicial del pavimento al finalizar la obra y protección hasta entrega de obra. Todo el proceso de colocación se efectuará según indicaciones de la dirección facultativa y norma UNE 138002.`;
+    const revestimientoTemplate = `Suministro y ejecución de revestimiento con <span class="resaltado">{tipo_material}</span>, de aspecto <span class="resaltado">{aspecto}</span>, colección <span class="resaltado">{coleccion}</span>, color <span class="resaltado">{color}</span> de <span class="resaltado">{fabricante}</span>.\n\nCerámica con dimensiones nominales (Ancho x Largo x Espesor) <span class="resaltado">{dim_ancho}</span>x<span class="resaltado">{dim_alto}</span>x<span class="resaltado">{dim_espesor}</span> mm, desviación de longitud/anchura, rectitud de lados, ortogonalidad y planimetría inferior a <span class="resaltado">{desviacion}</span> (<span class="resaltado">{norma_dimensiones}</span>).\n\nDestonificado <span class="resaltado">{destonificado}</span> con una absorción de agua <span class="resaltado">{absorcion_agua}</span>, módulo de rotura <span class="resaltado">{modulo_rotura}</span> y fuerza de rotura <span class="resaltado">{carga_rotura}</span> (ISO-13006:2018 UNE-EN 14411:2016).\n\nContribuye a los estándares de construcción sostenible y saludable (LEED, BREEAM, WELL) gracias a disponer de Declaración Ambiental de Producto propia (DAP), no ser una fuente emisora de sustancias peligrosas COVs ni formaldehidos, así como por disponer de contenido de material reciclado >6%.\n\nColocación en capa fina, con adhesivo cementoso tecnológico avanzado, <span class="resaltado">{adhesivo_nombre}</span> de <span class="resaltado">{adhesivo_fabricante}</span>, tipo <span class="resaltado">{adhesivo_tipo}</span> según EN 12004, prescrito de acuerdo a las indicaciones de la UNE 138002 y rejuntadas con mortero de juntas cementoso de fraguado y endurecimiento rápido, <span class="resaltado">{mortero_nombre}</span> de <span class="resaltado">{mortero_fabricante}</span>, según EN 13888, para juntas de hasta <span class="resaltado">{junta_maxima}</span> mm.\n\nI/p.p medios auxiliares. Utilización de p/p de Crucetas Autonivelantes (no incluidas), formación de juntas perimetrales continuas, de anchura no menor de <span class="resaltado">{junta_perimetral}</span> mm, en los límites con paredes, pilares exentos y elevaciones de nivel y, en su caso, juntas de partición intermedias. Respetar juntas estructurales existentes en el soporte. Limpieza y comprobación del grado de humedad de la base. Replanteo de niveles. Replanteo de la disposición de las baldosas y juntas de movimiento. Aplicación del adhesivo. Colocación de las crucetas. Colocación de las baldosas con llana dentada y doble encolado. Relleno, si procede, de las juntas de partición intermedias. Rejuntado. Eliminación y limpieza del material sobrante. Limpieza inicial del pavimento al finalizar la obra y protección hasta entrega de obra. Todo el proceso de colocación se efectuará según indicaciones de la dirección facultativa y norma UNE 138002.`;
+
+    // --- GESTORES DE VISTAS ---
+    function showWelcomeView() {
+        ui.imageContainer.classList.add('oculto');
+        ui.output.classList.add('oculto');
+        ui.emptyState.classList.remove('oculto');
+    }
+
+    function showProductView() {
+        ui.emptyState.classList.add('oculto');
+        ui.imageContainer.classList.remove('oculto');
+        ui.output.classList.remove('oculto');
+    }
+
+    // --- LÓGICA PRINCIPAL ---
+    function handleProductSelection() {
+        const selectedIndex = this.value;
+        if (selectedIndex === "" || !csvData[selectedIndex]) {
+            displayEmptyState();
+        } else {
+            const product = csvData[parseInt(selectedIndex, 10)];
+            displayProductData(product);
+        }
+    }
+    
+    function displayEmptyState() {
+        showWelcomeView();
+        ui.formulario.reset();
+        document.getElementById('fabricante').value = 'PAMESA CERÁMICA';
+        document.getElementById('desviacion').value = '0,15%';
+        document.getElementById('norma_dimensiones').value = 'UNE-EN ISO10545-2, ISO 13006:2018 UNE-EN 14411:2016';
+        document.getElementById('uso_transito').value = 'tránsito intenso';
+        document.getElementById('label-dim-alto').textContent = 'Alto (cm)';
+        ui.linkDAP.href = '#';
+        ui.linkDOP.href = '#';
+    }
+
+    function displayProductData(product) {
+        showProductView();
+        const productType = product['Desc_Familia_web'] || '';
+        document.getElementById('tipo_material').value = productType;
+        document.getElementById('coleccion').value = product['MODELO'] || '';
+        document.getElementById('color').value = product['COLOR'] || '';
+        document.getElementById('aspecto').value = [product['Efecto'], product['Acabado']].filter(Boolean).join(' / ');
+        document.getElementById('dim_ancho').value = product['Ancho'] ? product['Ancho'].replace(',', '.') : '';
+        document.getElementById('dim_alto').value = product['Alto'] ? product['Alto'].replace(',', '.') : '';
+        document.getElementById('dim_espesor').value = product['Espesor(mm)'] ? product['Espesor(mm)'].replace(',', '.') : '';
+        document.getElementById('destonificado').value = product['Variacion_cromatica'] || '';
+        document.getElementById('absorcion_agua').value = product['iso_10545_3_absorcion_agua'] || '';
+        document.getElementById('clase_resbaladicidad').value = product['en_16165_anexo_c_deslizamiento_pendulo'] || '';
+        document.getElementById('valor_rd').value = product['(Rd)'] || '';
+        document.getElementById('resistencia_manchas').value = product['Resistenci_ a_manchas'] || '';
+        document.getElementById('resistencia_quimica').value = product['Resistencia_a_ataques_químicos'] || '';
+        document.getElementById('modulo_rotura').value = product['iso_10545_4_resistencia_flexion'] || '';
+        document.getElementById('carga_rotura').value = product['iso_10545_4_fuerza_rotura'] || '';
+        document.getElementById('adhesivo_tipo').value = product['Adhesivo'] || 'C2';
+        ui.linkDAP.href = product['declaracion_ambiental_producto'] || '#';
+        ui.linkDOP.href = product['declaracion_prestaciones'] || '#';
+
+        if (revestimientoTypes.includes(productType)) {
+            document.getElementById('junta_maxima').value = "4";
+            document.getElementById('label-dim-alto').textContent = 'Largo (cm)';
+        } else {
+            document.getElementById('junta_maxima').value = "15";
+            document.getElementById('label-dim-alto').textContent = 'Alto (cm)';
+        }
+
+        const imageUrl = product['imagen_url_web'];
+        if (imageUrl && imageUrl.trim() !== "") {
+            ui.imagePlaceholder.classList.add('oculto');
+            ui.imagenProducto.classList.remove('oculto');
+            ui.imagenProducto.src = imageUrl; 
+            ui.btnDescargarImagen.classList.remove('oculto');
+        } else {
+            ui.imagePlaceholder.classList.remove('oculto');
+            ui.imagenProducto.classList.add('oculto');
+            ui.btnDescargarImagen.classList.add('oculto');
+        }
+        generarTexto();
+    }
+
+    function generarTexto() {
+        if (ui.productSelector.value === "") return;
+        const values = {};
+        for (let el of ui.formulario.elements) { if (el.id) values[el.id] = el.value; }
+        const selectedProductType = document.getElementById('tipo_material').value;
+        let activeTemplate = revestimientoTypes.includes(selectedProductType) ? revestimientoTemplate : pavimentoTemplate;
+        let textoHTML = activeTemplate;
+        for (const key in values) {
+            textoHTML = textoHTML.replace(new RegExp(`{${key}}`, 'g'), values[key] || '[DATO NO ESPECIFICADO]');
+        }
+        ui.output.innerHTML = textoHTML;
+    }
+
+    // --- FILTROS Y CSV ---
+    function updateFiltersAndProductList() {
+        let tempFilteredProducts = csvData.filter(product => {
+            const is20mm = !document.getElementById('filtro-20mm').checked || (product['Espesor(mm)'] && product['Espesor(mm)'].startsWith('2'));
+            const isExt = !document.getElementById('filtro-ext').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('EXT'));
+            const isDup = !document.getElementById('filtro-dup').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('DUP'));
+            return is20mm && isExt && isDup;
+        });
+        
+        const activeSelectFilters = {};
+        Object.keys(ui.allSelectFilters).forEach(key => {
+            if (ui.allSelectFilters[key].value) activeSelectFilters[key] = ui.allSelectFilters[key].value;
+        });
+
+        const finalFilteredProducts = tempFilteredProducts.filter(product => {
+            return Object.keys(activeSelectFilters).every(key => product[key] === activeSelectFilters[key]);
+        });
+        populateProductSelector(finalFilteredProducts);
+        Object.keys(ui.allSelectFilters).forEach(currentKey => {
+            const otherFilters = { ...activeSelectFilters };
+            delete otherFilters[currentKey];
+            const availableDataForThisFilter = tempFilteredProducts.filter(product => Object.keys(otherFilters).every(key => product[key] === otherFilters[key]));
+            const uniqueValues = [...new Set(availableDataForThisFilter.map(item => item[currentKey]))].filter(Boolean).sort();
+            repopulateSelectWithOptions(ui.allSelectFilters[currentKey], uniqueValues);
+        });
+        ui.statusMessage.textContent = `Mostrando ${finalFilteredProducts.length} de ${csvData.length} productos.`;
+    }
+    
+    function repopulateSelectWithOptions(selectElement, options) {
+        const currentValue = selectElement.value;
+        selectElement.innerHTML = `<option value="">Todos</option>`;
+        options.forEach(value => {
+            const option = document.createElement('option');
+            option.value = option.textContent = value;
+            if (value === currentValue) option.selected = true;
+            selectElement.appendChild(option);
+        });
+    }
+
+    function populateProductSelector(products) {
+        ui.productSelector.innerHTML = '<option value="">-- Seleccione un producto --</option>';
+        ui.productSelector.disabled = products.length === 0;
+        products.forEach(product => {
+            const originalIndex = csvData.findIndex(p => p === product);
+            const option = document.createElement('option');
+            option.value = originalIndex;
+            option.textContent = `${product.MODELO || 'S/M'} - ${product.COLOR || 'S/C'} - ${product.FORMATO || 'S/F'}`;
+            ui.productSelector.appendChild(option);
+        });
+    }
+    
+    function clearFilters() {
+         ui.quickFilters.forEach(qf => qf.checked = false);
+         Object.values(ui.allSelectFilters).forEach(select => select.value = '');
+         if(ui.advancedFiltersToggle.classList.contains('open')) toggleAdvancedFilters();
+         updateFiltersAndProductList();
+         ui.productSelector.value = "";
+         handleProductSelection.call(ui.productSelector);
+    }
+    
+    function toggleAdvancedFilters() {
+        ui.advancedFiltersToggle.classList.toggle('open');
+        ui.advancedFiltersContent.style.display = ui.advancedFiltersContent.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // CAMBIO: Esta función es completamente nueva. Carga el CSV automáticamente.
+    async function loadDataAndInitializeApp() {
+        // Asegúrate de que el nombre del archivo coincida exactamente.
+        const csvFilePath = 'BD_contrac_presto3.csv'; 
+        
+        // Mensaje inicial de carga
+        ui.statusMessage.textContent = 'Cargando datos de productos...';
+
+        try {
+            // Usamos fetch para solicitar el archivo
+            const response = await fetch(csvFilePath);
+
+            // Verificamos si la solicitud fue exitosa (código 200)
+            if (!response.ok) {
+                throw new Error(`No se pudo cargar el archivo: ${response.statusText}`);
+            }
+
+            // Obtenemos el contenido del archivo como texto
+            const csvText = await response.text();
+            
+            // Usamos la función parseCSV que ya tenías
+            csvData = parseCSV(csvText);
+
+            if (csvData.length === 0) {
+                throw new Error("No se encontraron datos válidos en el archivo CSV.");
+            }
+
+            // Una vez cargado, inicializamos la aplicación
+            ui.statusMessage.textContent = `Se han cargado ${csvData.length} productos.`;
+            Object.values(ui.allSelectFilters).forEach(select => { select.disabled = false; });
+            updateFiltersAndProductList();
+        
+        } catch (error) {
+            // Manejo de errores (por si el archivo no se encuentra o está corrupto)
+            ui.statusMessage.textContent = `Error crítico: No se pudieron cargar los datos.`;
+            console.error("Error al cargar y procesar el CSV:", error);
+        }
+    }
+
+    // CAMBIO: La vieja función 'handleFileSelect' ya no se necesita y se puede eliminar.
+
+    function parseCSV(text) {
+        const lines = text.trim().split(/\r\n|\n/);
+        if (lines.length < 2) throw new Error("CSV inválido.");
+        const headerLine = lines[0].replace(/^\uFEFF/, '');
+        const delimiter = (headerLine.match(/;/g) || []).length > (headerLine.match(/,/g) || []).length ? ';' : ',';
+        const headers = headerLine.split(delimiter).map(h => h.trim());
+        const data = [];
+        for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (line === '') continue;
+            const values = line.split(delimiter);
+            if (values.length < headers.length) continue; 
+            const entry = {};
+            headers.forEach((header, index) => {
+                if (header) entry[header] = values[index] ? values[index].trim() : '';
+            });
+            data.push(entry);
+        }
+        return data;
+    }
+
+    // --- EVENTOS ---
+    ui.imagenProducto.addEventListener('error', () => {
+        console.warn('Imagen no cargada. Volviendo al placeholder.');
+        ui.imagenProducto.classList.add('oculto');
+        ui.imagePlaceholder.classList.remove('oculto');
+        ui.btnDescargarImagen.classList.add('oculto');
+    });
+
+    ui.productSelector.addEventListener('change', handleProductSelection);
+    Array.from(ui.formulario.elements).forEach(el => el.addEventListener('input', generarTexto));
+    // CAMBIO: Eliminamos el listener del input de archivo
+    // ui.csvFileInput.addEventListener('change', handleFileSelect); 
+    ui.btnClearFilters.addEventListener('click', clearFilters);
+    ui.advancedFiltersToggle.addEventListener('click', toggleAdvancedFilters);
+    Object.values(ui.allSelectFilters).forEach(select => select.addEventListener('change', updateFiltersAndProductList));
+    ui.quickFilters.forEach(qf => qf.addEventListener('change', updateFiltersAndProductList));
+    
+    ui.btnCopiar.addEventListener('click', () => {
+        if (ui.output.classList.contains('oculto')) return;
+        navigator.clipboard.writeText(ui.output.textContent).then(() => {
+            ui.btnCopiar.textContent = '¡Copiado!';
+            setTimeout(() => { ui.btnCopiar.textContent = 'Copiar Texto'; }, 2000);
+        });
+    });
+    ui.btnDescargarTxt.addEventListener('click', () => {
+        if (ui.output.classList.contains('oculto')) return;
+        const blob = new Blob([ui.output.textContent], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const product = csvData[parseInt(ui.productSelector.value, 10)];
+        const fileName = `prescripcion_Pamesa_${product.MODELO || 'modelo'}_${product.COLOR || 'color'}.txt`;
+        a.href = url;
+        a.download = fileName.replace(/[/\\?%*:|"<>]/g, '-');
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
+    ui.btnDescargarImagen.addEventListener('click', async () => {
+        const imageUrl = ui.imagenProducto.src;
+        if (!imageUrl || imageUrl.endsWith('#') || ui.imagenProducto.classList.contains('oculto')) return;
+        try {
+            const response = await fetch(imageUrl);
+            if (!response.ok) throw new Error('Network response was not ok');
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const product = csvData[parseInt(ui.productSelector.value, 10)];
+            const fileName = `Pamesa_${product.MODELO || 'modelo'}_${product.COLOR || 'color'}.jpg`;
+            a.href = url;
+            a.download = fileName.replace(/[/\\?%*:|"<>]/g, '-');
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Error al descargar la imagen:", error);
+            alert("No se pudo descargar la imagen directamente. Se abrirá en una nueva pestaña.");
+            window.open(imageUrl, '_blank');
+        }
+    });
+
+    // Iniciar en estado limpio y luego cargar datos
+    displayEmptyState();
+    // CAMBIO: Invocamos la nueva función para que cargue los datos al iniciar la página.
+    loadDataAndInitializeApp(); 
+});
+</script>
+
+</body>
+</html>
