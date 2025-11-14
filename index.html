@@ -5,9 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generador de Prescripciones de Obra v2.0 - Pamesa Cerámica</title>
     
+    <!-- LIBRERÍAS EXTERNAS -->
+    <!-- Fuente Montserrat -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Librería jsPDF para generar el PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <style>
         :root {
@@ -205,6 +210,13 @@
             background-color: var(--color-principal-hover); transform: translateY(-2px); color: white;
             box-shadow: 0 4px 10px rgba(206, 23, 25, 0.2);
         }
+        /* Estilo específico para botón deshabilitado/cargando */
+        .btn-accion:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
         .btn-accion.secundario, .link-accion.secundario { background-color: var(--color-secundario); }
         .btn-accion.secundario:hover, .link-accion.secundario:hover {
              background-color: var(--color-secundario-hover); box-shadow: 0 4px 10px rgba(74, 74, 74, 0.2);
@@ -253,7 +265,6 @@
         
         .resaltado { color: var(--color-principal); font-weight: 600; }
         
-        /* SOLUCIÓN CLAVE: Usar !important para asegurar que el JS sobrescribe cualquier estilo */
         .oculto { display: none !important; }
 
         /* --- RESPONSIVIDAD --- */
@@ -394,13 +405,14 @@
                         <div class="grupo-botones">
                             <button id="btn-copiar" class="btn-accion">Copiar Texto</button>
                             <button id="btn-descargar-txt" class="btn-accion">Descargar .txt</button>
+                            <!-- BOTÓN NUEVO PARA PDF -->
+                            <button id="btn-descargar-pdf" class="btn-accion">Descargar PDF</button>
                             <a id="link-dap" href="#" target="_blank" class="link-accion secundario">Ver DAP</a>
                             <a id="link-dop" href="#" target="_blank" class="link-accion secundario">Ver DoP</a>
                         </div>
                     </div>
                 </div>
                 <div class="panel-body">
-                    <!-- AQUI ESTABA EL PROBLEMA: El contenedor tiene que estar oculto en la bienvenida -->
                     <div id="imagen-producto-container" class="oculto">
                          <div class="image-wrapper">
                              <div id="image-placeholder">
@@ -431,8 +443,6 @@ document.addEventListener('DOMContentLoaded', function() {
         output: document.getElementById('texto-generado'),
         emptyState: document.getElementById('empty-state'),
         imageContainer: document.getElementById('imagen-producto-container'),
-        // CAMBIO: Ya no necesitamos la referencia al input de archivo
-        // csvFileInput: document.getElementById('csv-file-input'), 
         productSelector: document.getElementById('product-selector'),
         statusMessage: document.getElementById('status-message'),
         btnClearFilters: document.getElementById('btn-clear-filters'),
@@ -440,6 +450,7 @@ document.addEventListener('DOMContentLoaded', function() {
         advancedFiltersContent: document.getElementById('filtros-avanzados-content'),
         btnCopiar: document.getElementById('btn-copiar'),
         btnDescargarTxt: document.getElementById('btn-descargar-txt'),
+        btnDescargarPdf: document.getElementById('btn-descargar-pdf'),
         linkDAP: document.getElementById('link-dap'),
         linkDOP: document.getElementById('link-dop'),
         imagePlaceholder: document.getElementById('image-placeholder'),
@@ -460,7 +471,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'Revestimiento pasta blanca rectificada'
     ];
     
-    // Plantillas (sin cambios)
+    // Plantillas
     const pavimentoTemplate = `Suministro y ejecución de pavimento con <span class="resaltado">{tipo_material}</span>, de aspecto <span class="resaltado">{aspecto}</span>, colección <span class="resaltado">{coleccion}</span>, color <span class="resaltado">{color}</span> de <span class="resaltado">{fabricante}</span>. Conformado por prensado en seco, tratado en monococción a temperatura de 1200ºC.\n\nCerámica con dimensiones nominales de (Ancho x Alto x Espesor) <span class="resaltado">{dim_ancho}</span>x<span class="resaltado">{dim_alto}</span>x<span class="resaltado">{dim_espesor}</span> cm, desviación de longitud/anchura, rectitud de lados, ortogonalidad y planimetría inferior a <span class="resaltado">{desviacion}</span> (<span class="resaltado">{norma_dimensiones}</span>).\n\nDestonificado <span class="resaltado">{destonificado}</span>, con una absorción de agua muy baja <span class="resaltado">{absorcion_agua}</span> según ISO 10545-3. Clasificación de suelos según su resbaladicidad <span class="resaltado">{clase_resbaladicidad}</span> (CTE DBSUA), resistencia al deslizamiento <span class="resaltado">{valor_rd}</span> (UNE 41901:2017 EX). Módulo de rotura <span class="resaltado">{modulo_rotura}</span> (ISO-13006:2018 UNE-EN 14411:2016) y carga de rotura <span class="resaltado">{carga_rotura}</span> según ISO10545-4.\n\nPavimento de <span class="resaltado">{uso_transito}</span> conforme a la clasificación de baldosas según uso de la Guía de la Baldosa Cerámica (Documento reconocido DRB 01/11), resistente al choque térmico, al cuarteo, a la helada, a las manchas <span class="resaltado">{resistencia_manchas}</span>, según ISO 10545-14 y a los ataques químicos: <span class="resaltado">{resistencia_quimica}</span>, según ISO 10545-13.\n\nContribuye a los estándares de construcción sostenible y saludable (LEED, BREEAM, WELL) gracias a disponer de Declaración Ambiental de Producto propia (DAP), no ser una fuente emisora de sustancias peligrosas COV’s ni formaldehidos, así como por disponer de contenido de material reciclado >6%. Disponible marcado CE.\n\nCerámica recibida sobre recrecido cementoso sin calefacción radiante (no incluido), apto para la colocación en capa fina y tránsito previsto, con adhesivo de altas prestaciones con excelente adherencia y deformabilidad, <span class="resaltado">{adhesivo_nombre}</span> de <span class="resaltado">{adhesivo_fabricante}</span>, tipo <span class="resaltado">{adhesivo_tipo}</span>, según EN 12004, prescrito de acuerdo a las indicaciones de la UNE 138002 y rejuntadas con mortero de juntas cementoso de fraguado y endurecimiento rápido, <span class="resaltado">{mortero_nombre}</span> de <span class="resaltado">{mortero_fabricante}</span>, según EN 13888, para juntas de hasta <span class="resaltado">{junta_maxima}</span>mm.\n\nI/p.p medios auxiliares. Utilización de p/p de Crucetas Autonivelantes (no incluidas), formación de juntas perimetrales continuas, de anchura no menor de <span class="resaltado">{junta_perimetral}</span> mm, en los límites con paredes, pilares exentos y elevaciones de nivel y, en su caso, juntas de partición intermedias. Respetar juntas estructurales existentes en el soporte. Incluso limpieza y comprobación del grado de humedad de la base. Replanteo de niveles. Replanteo de la disposición de las baldosas y juntas de movimiento. Aplicación del adhesivo. Colocación de las crucetas. Colocación de las baldosas con llana dentada y doble encolado. Relleno, si procede, de las juntas de partición intermedias. Rejuntado. Eliminación y limpieza del material sobrante. Limpieza inicial del pavimento al finalizar la obra y protección hasta entrega de obra. Todo el proceso de colocación se efectuará según indicaciones de la dirección facultativa y norma UNE 138002.`;
     const revestimientoTemplate = `Suministro y ejecución de revestimiento con <span class="resaltado">{tipo_material}</span>, de aspecto <span class="resaltado">{aspecto}</span>, colección <span class="resaltado">{coleccion}</span>, color <span class="resaltado">{color}</span> de <span class="resaltado">{fabricante}</span>.\n\nCerámica con dimensiones nominales (Ancho x Largo x Espesor) <span class="resaltado">{dim_ancho}</span>x<span class="resaltado">{dim_alto}</span>x<span class="resaltado">{dim_espesor}</span> cm, desviación de longitud/anchura, rectitud de lados, ortogonalidad y planimetría inferior a <span class="resaltado">{desviacion}</span> (<span class="resaltado">{norma_dimensiones}</span>).\n\nDestonificado <span class="resaltado">{destonificado}</span> con una absorción de agua <span class="resaltado">{absorcion_agua}</span>, módulo de rotura <span class="resaltado">{modulo_rotura}</span> y fuerza de rotura <span class="resaltado">{carga_rotura}</span> (ISO-13006:2018 UNE-EN 14411:2016).\n\nContribuye a los estándares de construcción sostenible y saludable (LEED, BREEAM, WELL) gracias a disponer de Declaración Ambiental de Producto propia (DAP), no ser una fuente emisora de sustancias peligrosas COVs ni formaldehidos, así como por disponer de contenido de material reciclado >6%.\n\nColocación en capa fina, con adhesivo cementoso tecnológico avanzado, <span class="resaltado">{adhesivo_nombre}</span> de <span class="resaltado">{adhesivo_fabricante}</span>, tipo <span class="resaltado">{adhesivo_tipo}</span> según EN 12004, prescrito de acuerdo a las indicaciones de la UNE 138002 y rejuntadas con mortero de juntas cementoso de fraguado y endurecimiento rápido, <span class="resaltado">{mortero_nombre}</span> de <span class="resaltado">{mortero_fabricante}</span>, según EN 13888, para juntas de hasta <span class="resaltado">{junta_maxima}</span> mm.\n\nI/p.p medios auxiliares. Utilización de p/p de Crucetas Autonivelantes (no incluidas), formación de juntas perimetrales continuas, de anchura no menor de <span class="resaltado">{junta_perimetral}</span> mm, en los límites con paredes, pilares exentos y elevaciones de nivel y, en su caso, juntas de partición intermedias. Respetar juntas estructurales existentes en el soporte. Limpieza y comprobación del grado de humedad de la base. Replanteo de niveles. Replanteo de la disposición de las baldosas y juntas de movimiento. Aplicación del adhesivo. Colocación de las crucetas. Colocación de las baldosas con llana dentada y doble encolado. Relleno, si procede, de las juntas de partición intermedias. Rejuntado. Eliminación y limpieza del material sobrante. Limpieza inicial del pavimento al finalizar la obra y protección hasta entrega de obra. Todo el proceso de colocación se efectuará según indicaciones de la dirección facultativa y norma UNE 138002.`;
 
@@ -622,46 +633,34 @@ document.addEventListener('DOMContentLoaded', function() {
         ui.advancedFiltersContent.style.display = ui.advancedFiltersContent.style.display === 'block' ? 'none' : 'block';
     }
 
-    // CAMBIO: Esta función es completamente nueva. Carga el CSV automáticamente.
     async function loadDataAndInitializeApp() {
-        // Asegúrate de que el nombre del archivo coincida exactamente.
         const csvFilePath = 'BD_contrac_presto3.csv'; 
         
-        // Mensaje inicial de carga
         ui.statusMessage.textContent = 'Cargando datos de productos...';
 
         try {
-            // Usamos fetch para solicitar el archivo
             const response = await fetch(csvFilePath);
 
-            // Verificamos si la solicitud fue exitosa (código 200)
             if (!response.ok) {
                 throw new Error(`No se pudo cargar el archivo: ${response.statusText}`);
             }
 
-            // Obtenemos el contenido del archivo como texto
             const csvText = await response.text();
-            
-            // Usamos la función parseCSV que ya tenías
             csvData = parseCSV(csvText);
 
             if (csvData.length === 0) {
                 throw new Error("No se encontraron datos válidos en el archivo CSV.");
             }
 
-            // Una vez cargado, inicializamos la aplicación
             ui.statusMessage.textContent = `Se han cargado ${csvData.length} productos.`;
             Object.values(ui.allSelectFilters).forEach(select => { select.disabled = false; });
             updateFiltersAndProductList();
         
         } catch (error) {
-            // Manejo de errores (por si el archivo no se encuentra o está corrupto)
             ui.statusMessage.textContent = `Error crítico: No se pudieron cargar los datos.`;
             console.error("Error al cargar y procesar el CSV:", error);
         }
     }
-
-    // CAMBIO: La vieja función 'handleFileSelect' ya no se necesita y se puede eliminar.
 
     function parseCSV(text) {
         const lines = text.trim().split(/\r\n|\n/);
@@ -684,9 +683,247 @@ document.addEventListener('DOMContentLoaded', function() {
         return data;
     }
 
+    // --- FUNCIONALIDAD PDF ---
+    async function generarPDF() {
+        // 1. Validación
+        if (ui.output.classList.contains('oculto') || !ui.productSelector.value) {
+            alert("Por favor, selecciona un producto para generar el PDF.");
+            return;
+        }
+
+        const originalButtonText = ui.btnDescargarPdf.textContent;
+        ui.btnDescargarPdf.textContent = 'Generando...';
+        ui.btnDescargarPdf.disabled = true;
+
+        try {
+            // 2. Inicializar jsPDF A4
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+
+            // --- CONSTANTES DE DISEÑO ---
+            const MARGIN_LEFT = 20;
+            const MARGIN_TOP = 20;
+            const MARGIN_RIGHT = 20;
+            const PAGE_HEIGHT = 297;
+            const PAGE_WIDTH = 210;
+            const CONTENT_WIDTH = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT;
+            let currentY = MARGIN_TOP;
+
+            // --- 3. CARGA DE IMÁGENES ---
+            const imageToBase64 = async (url) => {
+                try {
+                    if (!url || url.trim() === '') return null;
+                    const response = await fetch(url);
+                    const blob = await response.blob();
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(blob);
+                    });
+                } catch (e) {
+                    console.error(`No se pudo cargar la imagen: ${url}`, e);
+                    return null;
+                }
+            };
+            
+            // Cargar logo local y producto
+            const logoBase64 = await imageToBase64('LOGO-PAMESA.jpg');
+            const productoBase64 = await imageToBase64(ui.imagenProducto.src);
+
+            // --- 4. MAQUETACIÓN ---
+
+            // A) ENCABEZADO
+            if (logoBase64) {
+                // Logo Pamesa a la izquierda, ancho 50mm
+                doc.addImage(logoBase64, 'JPEG', MARGIN_LEFT, 12, 50, 10);
+            }
+            
+            // Título del documento a la derecha
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(14);
+            doc.setTextColor('#222222');
+            doc.text('Prescripción Técnica de Obra', PAGE_WIDTH - MARGIN_RIGHT, 18, { align: 'right' });
+            
+            currentY += 15;
+            // Línea divisoria roja corporativa
+            doc.setDrawColor('#ce1719');
+            doc.setLineWidth(0.5);
+            doc.line(MARGIN_LEFT, currentY, PAGE_WIDTH - MARGIN_RIGHT, currentY);
+            currentY += 15;
+
+            // B) TÍTULO DEL PRODUCTO
+            const product = csvData[parseInt(ui.productSelector.value, 10)];
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(16);
+            doc.setTextColor('#ce1719');
+            const title = `${product.MODELO || 'Modelo'} - ${product.COLOR || 'Color'} - ${product.FORMATO || 'Formato'}`;
+            doc.text(title, MARGIN_LEFT, currentY);
+            currentY += 10;
+
+            // C) IMAGEN DEL PRODUCTO
+            // Lógica: Si hay imagen, la ponemos a la izquierda y el texto fluye a la derecha.
+            // Si no hay, el texto ocupa todo el ancho.
+            let textX = MARGIN_LEFT;
+            let textWidth = CONTENT_WIDTH;
+            const imgWidth = 70;
+            const imgHeight = 70;
+            const gap = 10;
+            const imgBottomY = currentY + imgHeight + 10;
+
+            if (productoBase64) {
+                doc.addImage(productoBase64, 'JPEG', MARGIN_LEFT, currentY, imgWidth, imgHeight);
+                textX = MARGIN_LEFT + imgWidth + gap;
+                textWidth = CONTENT_WIDTH - imgWidth - gap;
+            }
+            
+            // D) PROCESADO DE TEXTO
+            // Recuperamos el HTML generado
+            const textoPrescripcion = document.getElementById('texto-generado').innerHTML;
+            // Reemplazamos las etiquetas HTML por marcadores especiales para el parser
+            // <br> -> saltos de línea
+            // <span class="resaltado"> -> MARCADOR_INICIO ... MARCADOR_FIN
+            let textoProcesado = textoPrescripcion
+                .replace(/<br\s*\/?>/gi, '\n')
+                .replace(/<span class="resaltado">/g, '##START##')
+                .replace(/<\/span>/g, '##END##')
+                // Decodificar entidades HTML básicas si las hubiera
+                .replace(/&nbsp;/g, ' ');
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.setTextColor('#333333');
+            
+            // Dividimos el texto en párrafos para manejar mejor los saltos
+            const paragraphs = textoProcesado.split('\n');
+            
+            // Altura de línea
+            const lineHeight = 5; 
+            
+            paragraphs.forEach((paragraph) => {
+                // Si el párrafo está vacío, añadimos espacio y continuamos
+                if (paragraph.trim() === '') {
+                    currentY += lineHeight;
+                    return;
+                }
+
+                // Dividimos el párrafo en partes (normales y resaltadas)
+                const parts = paragraph.split(/(##START##|##END##)/g);
+                let isBold = false;
+                
+                // Construir array de "tokens" con texto y estilo
+                let tokens = [];
+                parts.forEach(part => {
+                    if (part === '##START##') isBold = true;
+                    else if (part === '##END##') isBold = false;
+                    else if (part !== '') {
+                        tokens.push({ text: part, bold: isBold });
+                    }
+                });
+
+                // Lógica de dibujado palabra por palabra (word wrapping manual básico)
+                // para soportar cambios de estilo dentro de la misma línea
+                let lineBuffer = [];
+                let currentLineWidth = 0;
+
+                // Aplanar tokens en palabras
+                tokens.forEach(token => {
+                    const words = token.text.split(' ');
+                    words.forEach((word, index) => {
+                        // Añadir espacio si no es la primera palabra del token
+                        // o si hay más palabras en el token
+                        let wordText = word;
+                        if (index < words.length - 1 || token.text.endsWith(' ')) {
+                             wordText += ' '; 
+                        }
+                        // Corregir espaciado entre tokens
+                        if (index === 0 && lineBuffer.length > 0 && !lineBuffer[lineBuffer.length-1].text.endsWith(' ')) {
+                            wordText = ' ' + wordText;
+                        }
+
+                        // Calcular ancho de esta palabra en el estilo actual
+                        doc.setFont('helvetica', token.bold ? 'bold' : 'normal');
+                        const wordWidth = doc.getStringUnitWidth(wordText) * doc.getFontSize() / doc.internal.scaleFactor;
+
+                        if (currentLineWidth + wordWidth > textWidth) {
+                            // Imprimir línea actual
+                            printLineBuffer(doc, lineBuffer, textX, currentY);
+                            currentY += lineHeight;
+                            
+                            // Chequear salto de página o superación de imagen
+                            checkPageBreak();
+                            
+                            // Iniciar nueva línea
+                            lineBuffer = [{ text: wordText.trimStart(), bold: token.bold, width: wordWidth }];
+                            currentLineWidth = wordWidth;
+                        } else {
+                            lineBuffer.push({ text: wordText, bold: token.bold, width: wordWidth });
+                            currentLineWidth += wordWidth;
+                        }
+                    });
+                });
+                
+                // Imprimir lo que queda del buffer (última línea del párrafo)
+                if (lineBuffer.length > 0) {
+                    printLineBuffer(doc, lineBuffer, textX, currentY);
+                    currentY += lineHeight * 1.5; // Un poco más de espacio entre párrafos
+                    checkPageBreak();
+                }
+            });
+
+            // Funciones auxiliares dentro del scope de PDF
+            function printLineBuffer(doc, buffer, x, y) {
+                let currentX = x;
+                buffer.forEach(item => {
+                    doc.setFont('helvetica', item.bold ? 'bold' : 'normal');
+                    doc.setTextColor(item.bold ? '#ce1719' : '#333333');
+                    doc.text(item.text, currentX, y);
+                    currentX += doc.getStringUnitWidth(item.text) * doc.getFontSize() / doc.internal.scaleFactor;
+                });
+            }
+
+            function checkPageBreak() {
+                // Si tenemos imagen y bajamos más allá de su altura, recuperamos el ancho completo
+                if (productoBase64 && currentY > imgBottomY && textWidth < CONTENT_WIDTH) {
+                    textX = MARGIN_LEFT;
+                    textWidth = CONTENT_WIDTH;
+                }
+                
+                // Salto de página
+                if (currentY > PAGE_HEIGHT - 25) { // 25mm margen inferior
+                    doc.addPage();
+                    currentY = MARGIN_TOP;
+                    textX = MARGIN_LEFT;
+                    textWidth = CONTENT_WIDTH;
+                }
+            }
+
+            // E) PIE DE PÁGINA
+            const pageCount = doc.internal.getNumberOfPages();
+            for(let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(8);
+                doc.setTextColor('#888888');
+                const footerText = `Pamesa Cerámica | Documento generado el ${new Date().toLocaleDateString()} | Página ${i} de ${pageCount}`;
+                doc.text(footerText, PAGE_WIDTH / 2, PAGE_HEIGHT - 10, { align: 'center' });
+            }
+
+            // 5. GUARDAR ARCHIVO
+            const fileName = `prescripcion_Pamesa_${product.MODELO || 'modelo'}_${product.COLOR || 'color'}.pdf`;
+            doc.save(fileName.replace(/[/\\?%*:|"<>]/g, '-'));
+
+        } catch (error) {
+            console.error("Error al generar el PDF:", error);
+            alert("Ocurrió un error al generar el PDF. Revisa la consola para más detalles.");
+        } finally {
+            ui.btnDescargarPdf.textContent = originalButtonText;
+            ui.btnDescargarPdf.disabled = false;
+        }
+    }
+
     // --- EVENTOS ---
     ui.imagenProducto.addEventListener('error', () => {
-        console.warn('Imagen no cargada. Volviendo al placeholder.');
         ui.imagenProducto.classList.add('oculto');
         ui.imagePlaceholder.classList.remove('oculto');
         ui.btnDescargarImagen.classList.add('oculto');
@@ -694,8 +931,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     ui.productSelector.addEventListener('change', handleProductSelection);
     Array.from(ui.formulario.elements).forEach(el => el.addEventListener('input', generarTexto));
-    // CAMBIO: Eliminamos el listener del input de archivo
-    // ui.csvFileInput.addEventListener('change', handleFileSelect); 
+    
     ui.btnClearFilters.addEventListener('click', clearFilters);
     ui.advancedFiltersToggle.addEventListener('click', toggleAdvancedFilters);
     Object.values(ui.allSelectFilters).forEach(select => select.addEventListener('change', updateFiltersAndProductList));
@@ -704,10 +940,12 @@ document.addEventListener('DOMContentLoaded', function() {
     ui.btnCopiar.addEventListener('click', () => {
         if (ui.output.classList.contains('oculto')) return;
         navigator.clipboard.writeText(ui.output.textContent).then(() => {
+            const original = ui.btnCopiar.textContent;
             ui.btnCopiar.textContent = '¡Copiado!';
-            setTimeout(() => { ui.btnCopiar.textContent = 'Copiar Texto'; }, 2000);
+            setTimeout(() => { ui.btnCopiar.textContent = original; }, 2000);
         });
     });
+
     ui.btnDescargarTxt.addEventListener('click', () => {
         if (ui.output.classList.contains('oculto')) return;
         const blob = new Blob([ui.output.textContent], { type: 'text/plain;charset=utf-8' });
@@ -720,6 +958,10 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         URL.revokeObjectURL(url);
     });
+    
+    // Listener para el botón PDF
+    ui.btnDescargarPdf.addEventListener('click', generarPDF);
+
     ui.btnDescargarImagen.addEventListener('click', async () => {
         const imageUrl = ui.imagenProducto.src;
         if (!imageUrl || imageUrl.endsWith('#') || ui.imagenProducto.classList.contains('oculto')) return;
@@ -737,17 +979,14 @@ document.addEventListener('DOMContentLoaded', function() {
             URL.revokeObjectURL(url);
         } catch (error) {
             console.error("Error al descargar la imagen:", error);
-            alert("No se pudo descargar la imagen directamente. Se abrirá en una nueva pestaña.");
             window.open(imageUrl, '_blank');
         }
     });
 
-    // Iniciar en estado limpio y luego cargar datos
+    // Inicialización
     displayEmptyState();
-    // CAMBIO: Invocamos la nueva función para que cargue los datos al iniciar la página.
     loadDataAndInitializeApp(); 
 });
-</script>
-
+    </script>
 </body>
 </html>
