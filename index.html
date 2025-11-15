@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Prescripciones de Obra v3.3 - Pamesa Cerámica</title>
+    <title>Generador de Prescripciones de Obra v3.4 - Pamesa Cerámica</title>
     
     <!-- LIBRERÍAS EXTERNAS -->
     <!-- Fuente Montserrat -->
@@ -205,34 +205,31 @@
         .btn-volver:hover { color: var(--color-principal); }
         .btn-volver svg { width: 20px; height: 20px; }
 
-        /**************************************************/
-        /* ****** INICIO DE LA CORRECCIÓN DEFINITIVA ****** */
-        /**************************************************/
 
-        /* Imagen Grande en Detalle */
+        /**************************************************/
+        /* ****** INICIO DE LA CORRECCIÓN CSS ****** */
+        /**************************************************/
         #detail-image-container {
             width: 100%;
-            height: 40vh; /* Se establece una altura fija al contenedor (40% de la altura de la ventana) */
+            /* Se establece una altura máxima para darle un espacio definido */
+            max-height: 40vh; 
             background-color: #fff;
             border: 1px solid var(--color-borde-suave);
             display: flex;
             align-items: center;
             justify-content: center;
             margin-bottom: 20px;
-            overflow: hidden;
+            overflow: hidden; /* Esto es importante por si acaso */
         }
         
-        /* 1. SE CORRIGE EL SELECTOR: de #detail-image a #detail-product-image para que coincida con el HTML. */
-        /* 2. SE USA OBJECT-FIT: Esta es la propiedad clave para ajustar la imagen sin deformarla. */
         #detail-product-image {
-            width: 100%;
-            height: 100%;
-            object-fit: contain; /* Asegura que toda la imagen sea visible, manteniendo la proporción */
-            display: block;
+            /* Con estas 3 propiedades, la imagen se ajustará perfectamente */
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain; /* Esta es la clave para que se vea entera sin deformarse */
         }
-        
         /************************************************/
-        /* ****** FIN DE LA CORRECCIÓN DEFINITIVA ****** */
+        /* ****** FIN DE LA CORRECCIÓN CSS ****** */
         /************************************************/
 
 
@@ -327,7 +324,7 @@
     <header class="header-corporativo">
         <div class="header-container">
             <img src="LOGO-PAMESA.jpg" alt="Logo Pamesa Cerámica" onerror="this.style.display='none'">
-            <h1>Generador de Prescripciones de Obra v3.3</h1>
+            <h1>Generador de Prescripciones de Obra v3.4</h1>
         </div>
     </header>
 
@@ -525,7 +522,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function goToSearchMode() {
         ui.viewDetail.classList.remove('active-view');
         ui.viewSearch.classList.add('active-view');
-        // No limpiamos los filtros para que el usuario siga donde estaba
     }
 
     function goToDetailMode(productIndex) {
@@ -559,21 +555,32 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('modulo_rotura').value = product['iso_10545_4_resistencia_flexion'] || '';
         document.getElementById('carga_rotura').value = product['iso_10545_4_fuerza_rotura'] || '';
         
-        // Valores por defecto editables
         document.getElementById('adhesivo_tipo').value = product['Adhesivo'] || 'C2';
         document.getElementById('junta_maxima').value = revestimientoTypes.includes(productType) ? "4" : "15";
 
         // 2. Imagen Principal
         const imageUrl = product['imagen_url_web'];
+
+        /**************************************************/
+        /* ****** INICIO DE LA CORRECCIÓN JAVASCRIPT ****** */
+        /**************************************************/
+        // La visibilidad de la imagen y su contenedor se gestiona ahora
+        // con clases y CSS, no con estilos inline que anulan todo.
         if (imageUrl && imageUrl.trim() !== "") {
             ui.detailImage.src = imageUrl;
-            ui.detailImage.style.display = 'block';
+            // Se muestra el contenedor y el botón de descarga
+            ui.detailImageContainer.style.display = 'flex';
             ui.btnDescargarImagen.style.display = 'inline-flex';
         } else {
-            ui.detailImage.src = ''; // o placeholder
-            ui.detailImage.style.display = 'none';
+            ui.detailImage.src = ''; 
+            // Se oculta el contenedor y el botón de descarga
+            ui.detailImageContainer.style.display = 'none';
             ui.btnDescargarImagen.style.display = 'none';
         }
+        /************************************************/
+        /* ****** FIN DE LA CORRECCIÓN JAVASCRIPT ****** */
+        /************************************************/
+
 
         // 3. Links
         ui.linkDAP.href = product['declaracion_ambiental_producto'] || '#';
@@ -602,7 +609,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- LÓGICA DE FILTROS (MODO BÚSQUEDA) ---
     function updateFiltersAndProductList() {
-        // 1. Filtros Checkbox
         let filteredProducts = csvData.filter(product => {
             const is20mm = !document.getElementById('filtro-20mm').checked || (product['Espesor(mm)'] && product['Espesor(mm)'].startsWith('2'));
             const isExt = !document.getElementById('filtro-ext').checked || (product['Acabado'] && product['Acabado'].toUpperCase() === 'EXT');
@@ -610,7 +616,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return is20mm && isExt && isDup;
         });
         
-        // 2. Filtros Select
         const activeSelectFilters = {};
         Object.keys(ui.allSelectFilters).forEach(key => {
             if (ui.allSelectFilters[key].value) activeSelectFilters[key] = ui.allSelectFilters[key].value;
@@ -622,7 +627,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
-        // 3. Actualizar Opciones Selects
         Object.keys(ui.allSelectFilters).forEach(currentKey => {
             const otherFilters = { ...activeSelectFilters };
             delete otherFilters[currentKey];
@@ -638,7 +642,6 @@ document.addEventListener('DOMContentLoaded', function() {
             repopulateSelectWithOptions(ui.allSelectFilters[currentKey], availableProducts);
         });
 
-        // 4. Renderizar Lista
         renderProductList(filteredProducts);
         ui.statusMessage.textContent = `${filteredProducts.length} productos encontrados`;
     }
@@ -678,19 +681,16 @@ document.addEventListener('DOMContentLoaded', function() {
         products.forEach(product => {
             const originalIndex = csvData.findIndex(p => p === product);
             
-            // Crear tarjeta
             const card = document.createElement('div');
             card.className = 'product-card';
             card.dataset.index = originalIndex;
             
-            // Miniatura
             const imgUrl = product['imagen_url_web'];
             let imgHTML = '<div class="card-no-thumb">Sin foto</div>';
             if (imgUrl && imgUrl.trim() !== "") {
                 imgHTML = `<img src="${imgUrl}" class="card-thumb" alt="mini" loading="lazy" onerror="this.parentNode.innerHTML='<div class=\'card-no-thumb\'>Error</div>'">`;
             }
 
-            // Tags
             const typeTag = product['Desc_Familia_web'] ? `<span class="tag">${product['Desc_Familia_web'].split(' ')[0]}</span>` : '';
             const classTag = product['en_16165_anexo_c_deslizamiento_pendulo'] ? `<span class="tag">C${product['en_16165_anexo_c_deslizamiento_pendulo']}</span>` : '';
             
@@ -769,11 +769,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const doc = new jsPDF('p', 'mm', 'a4');
             const product = csvData[selectedProductIndex];
             
-            // Configuración
             const M_LEFT = 20, M_TOP = 20, WIDTH = 170;
             let y = M_TOP;
 
-            // Helpers
             const imgToBase64 = async (url) => {
                 if (!url) return null;
                 try {
@@ -787,23 +785,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 } catch { return null; }
             };
 
-            // 1. Logo
             const logo = await imgToBase64('LOGO-PAMESA.jpg');
             if (logo) doc.addImage(logo, 'JPEG', M_LEFT, 10, 50, 10);
 
-            // 2. Título Doc
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(12);
             doc.text('Prescripción Técnica', 210 - 20, 16, { align: 'right' });
             y = 25;
             doc.setDrawColor(206, 23, 25); doc.line(M_LEFT, y, 210-20, y); y += 10;
 
-            // 3. Título Producto
             doc.setFontSize(16); doc.setTextColor(206, 23, 25);
             doc.text(`${product.MODELO} - ${product.COLOR}`, M_LEFT, y);
             y += 10;
 
-            // 4. Imagen Producto + Texto Ajustado
             const prodImg = await imgToBase64(ui.detailImage.src);
             let textX = M_LEFT;
             let textW = WIDTH;
@@ -814,7 +808,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 textW = WIDTH - 65;
             }
 
-            // Procesar Texto HTML a PDF (Lógica manual para mantener negritas)
             const rawHTML = ui.output.innerHTML;
             const cleanText = rawHTML.replace(/<br\s*\/?>/gi, '\n').replace(/&nbsp;/g, ' ');
             const paragraphs = cleanText.split('\n');
@@ -825,15 +818,11 @@ document.addEventListener('DOMContentLoaded', function() {
             paragraphs.forEach(para => {
                 if (!para.trim()) { currentY += 4; return; }
                 
-                // Reset X si pasamos la altura de la imagen
                 if (prodImg && currentY > (y + 65)) { textX = M_LEFT; textW = WIDTH; }
 
-                // Parsear negritas (span class="resaltado")
                 const parts = para.split(/(<span class="resaltado">.*?<\/span>)/g);
-                let line = [];
                 let lineWidth = 0;
 
-                // Aplanar partes en palabras con estilo
                 const words = [];
                 parts.forEach(part => {
                     const isBold = part.startsWith('<span');
@@ -843,18 +832,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 });
 
-                // Dibujar palabras
                 words.forEach(wordObj => {
                     doc.setFont('helvetica', wordObj.bold ? 'bold' : 'normal');
                     doc.setTextColor(wordObj.bold ? '#ce1719' : '#333333');
                     const wWidth = doc.getStringUnitWidth(wordObj.text) * 9 / doc.internal.scaleFactor;
 
                     if (lineWidth + wWidth > textW) {
-                        currentY += 4; // Nueva linea
+                        currentY += 4;
                         lineWidth = 0;
-                        if (prodImg && currentY > (y + 65)) { textX = M_LEFT; textW = WIDTH; } // Chequeo continuo
+                        if (prodImg && currentY > (y + 65)) { textX = M_LEFT; textW = WIDTH; } 
                         
-                        // Salto de página
                         if (currentY > 280) {
                             doc.addPage();
                             currentY = 20;
@@ -866,10 +853,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     lineWidth += wWidth;
                 });
                 
-                currentY += 5; // Margen párrafo
+                currentY += 5;
             });
 
-            // Footer
             const pages = doc.internal.getNumberOfPages();
             for(let i=1; i<=pages; i++) {
                 doc.setPage(i);
