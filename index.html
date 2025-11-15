@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Prescripciones de Obra v2.0 - Pamesa Cerámica</title>
+    <title>Generador de Prescripciones de Obra v3.0 - Pamesa Cerámica</title>
     
     <!-- LIBRERÍAS EXTERNAS -->
     <!-- Fuente Montserrat -->
@@ -119,9 +119,8 @@
         /* --- ESTILOS FORMULARIO --- */
         #formulario-busqueda {
             padding: 30px;
-            border-bottom: 1px solid var(--color-borde-suave);
-            flex-shrink: 0;
-            background: #fcfcfc;
+            overflow-y: auto;
+            flex-grow: 1;
         }
         #formulario-campos {
             padding: 30px;
@@ -142,7 +141,8 @@
         }
         .campo { margin-bottom: 15px; }
         .campo label {
-            display: block; margin-bottom: 6px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 6px;
             font-weight: 500; font-size: 0.85em;
             color: var(--color-texto-secundario);
         }
@@ -188,9 +188,74 @@
         .filtros-avanzados-toggle.open::after { content: ' ▲'; }
         .filtros-avanzados-content { display: none; padding-top: 10px; border-top: 1px solid var(--color-borde-suave); }
         #buscador-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
-        #status-message { margin-top: 15px; font-style: italic; color: var(--color-texto-secundario); }
+        #status-message { 
+            margin-top: 20px; 
+            padding: 10px;
+            font-weight: 600;
+            text-align: center;
+            border-radius: var(--radio-borde);
+            background-color: var(--color-fondo-suave);
+            border: 1px solid var(--color-borde-suave);
+            color: var(--color-texto-principal); 
+        }
 
-        /* --- PANEL RESULTADOS --- */
+        /* --- PANEL RESULTADOS Y NUEVOS ESTILOS --- */
+        .resultado-panel .panel-body {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            padding-top: 15px;
+        }
+
+        #product-results-list {
+            flex-shrink: 0;
+            height: 280px; /* Altura fija para la lista de resultados */
+            overflow-y: auto;
+            border: 1px solid var(--color-borde-suave);
+            border-radius: var(--radio-borde);
+            background: #fff;
+        }
+
+        .product-card {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--color-borde-suave);
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .product-card:last-child { border-bottom: none; }
+        .product-card:hover { background-color: #f7f7f7; }
+        .product-card.selected {
+            background-color: #fdeaea;
+            border-left: 4px solid var(--color-principal);
+            padding-left: 16px;
+        }
+        .card-title {
+            font-weight: 700;
+            font-size: 1em;
+            color: var(--color-texto-principal);
+            margin: 0 0 5px 0;
+        }
+        .card-differentiators {
+            font-size: 0.9em;
+            color: var(--color-texto-secundario);
+            margin-bottom: 10px;
+        }
+        .card-specs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .spec-tag {
+            background-color: var(--color-fondo-suave);
+            border: 1px solid var(--color-borde-suave);
+            color: var(--color-texto-secundario);
+            font-size: 0.75em;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+
         .resultado-acciones {
             display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
             gap: 20px;
@@ -210,7 +275,6 @@
             background-color: var(--color-principal-hover); transform: translateY(-2px); color: white;
             box-shadow: 0 4px 10px rgba(206, 23, 25, 0.2);
         }
-        /* Estilo específico para botón deshabilitado/cargando */
         .btn-accion:disabled {
             background-color: #ccc;
             cursor: not-allowed;
@@ -229,7 +293,7 @@
 
         /* --- IMAGEN Y PLACEHOLDER --- */
         #imagen-producto-container {
-            margin-bottom: 25px;
+            flex-shrink: 0;
         }
         .image-wrapper {
             display: flex; flex-direction: column; align-items: center; gap: 15px;
@@ -251,14 +315,18 @@
             white-space: pre-wrap; word-wrap: break-word;
             font-family: var(--font-main);
             background-color: #fdfdfd; padding: 25px; border-radius: var(--radio-borde);
-            border: 1px solid var(--color-borde-suave); min-height: 300px;
+            border: 1px solid var(--color-borde-suave);
             font-size: 0.95em; line-height: 1.8; color: #333;
+            overflow-y: auto;
+            flex-grow: 1;
         }
         #empty-state {
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             text-align: center; color: var(--color-texto-secundario);
             background-color: #fdfdfd; padding: 50px 25px; border-radius: var(--radio-borde);
-            border: 1px solid var(--color-borde-suave); min-height: 300px;
+            border: 1px solid var(--color-borde-suave);
+            min-height: 200px;
+            flex-grow: 1;
         }
         #empty-state svg { width: 60px; height: 60px; margin-bottom: 15px; opacity: 0.4; }
         #empty-state h3 { margin: 0 0 10px 0; color: var(--color-texto-principal); }
@@ -274,7 +342,8 @@
             .container { flex-direction: column; height: auto; }
             .formulario-panel { max-width: 100%; }
             .panel { overflow: visible; }
-            .panel-body, #formulario-campos { overflow: visible; }
+            .panel-body, #formulario-busqueda { overflow: visible; }
+            #product-results-list { height: 250px; }
         }
         @media (max-width: 768px) {
             .header-corporativo { padding: 15px; }
@@ -298,7 +367,7 @@
     <header class="header-corporativo">
         <div class="header-container">
             <img src="LOGO-PAMESA.jpg" alt="Logo Pamesa Cerámica" onerror="this.style.display='none'">
-            <h1>Generador de Prescripciones de Obra v2.0</h1>
+            <h1>Generador de Prescripciones de Obra v3.0</h1>
         </div>
     </header>
 
@@ -308,7 +377,7 @@
                 <div id="formulario-busqueda">
                     <fieldset style="margin: 0; padding:0; border: none;">
                         <div class="buscador-header">
-                            <legend>Búsqueda de Producto</legend>
+                            <legend>Asistente de Producto</legend>
                             <button type="button" id="btn-clear-filters" class="btn-limpiar">Limpiar Filtros</button>
                         </div>
                         
@@ -338,49 +407,13 @@
                                 </div>
                              </div>
                         </div>
-
-                        <div class="campo">
-                            <label for="product-selector">Seleccionar Producto</label>
-                            <select id="product-selector" disabled></select>
-                        </div>
-                        <p id="status-message">Por favor, cargue el archivo CSV para empezar.</p>
+                        
+                        <p id="status-message">Cargando datos...</p>
                     </fieldset>
                 </div>
-                <div id="formulario-campos" class="panel-body">
+                
+                <div id="formulario-campos" class="oculto">
                     <form id="formulario-prescripcion">
-                        <fieldset>
-                            <legend>1. Identificación</legend>
-                            <div class="campo"><label for="tipo_material">Tipo de material</label><input type="text" id="tipo_material" value="" readonly></div>
-                            <div class="campo"><label for="fabricante">Fabricante</label><input type="text" id="fabricante" value="PAMESA CERÁMICA" readonly></div>
-                            <div class="campo"><label for="coleccion">Colección</label><input type="text" id="coleccion" value="" readonly></div>
-                            <div class="campo"><label for="color">Color</label><input type="text" id="color" value="" readonly></div>
-                            <div class="campo"><label for="aspecto">Aspecto / Acabado</label><input type="text" id="aspecto" value="" readonly></div>
-                        </fieldset>
-                        
-                        <fieldset>
-                            <legend>2. Dimensiones</legend>
-                            <div class="campo grupo-dimensiones">
-                                <div><label for="dim_ancho">Ancho (cm)</label><input type="text" id="dim_ancho" value="" readonly></div>
-                                <div><label for="dim_alto" id="label-dim-alto">Alto (cm)</label><input type="text" id="dim_alto" value="" readonly></div>
-                                <div><label for="dim_espesor">Espesor (mm)</label><input type="text" id="dim_espesor" value="" readonly></div>
-                            </div>
-                            <div class="campo"><label for="desviacion">Desviación dimensional máxima (%)</label><input type="text" id="desviacion" value="0,15%" readonly></div>
-                            <div class="campo"><label for="norma_dimensiones">Normativa dimensional</label><input type="text" id="norma_dimensiones" value="UNE-EN ISO10545-2, ISO 13006:2018 UNE-EN 14411:2016" readonly></div>
-                        </fieldset>
-
-                        <fieldset>
-                            <legend>3. Características Técnicas</legend>
-                            <div class="campo"><label for="destonificado">Destonificado</label><input type="text" id="destonificado" value="" readonly></div>
-                            <div class="campo"><label for="absorcion_agua">Absorción de agua (%)</label><input type="text" id="absorcion_agua" value="" readonly></div>
-                            <div class="campo"><label for="clase_resbaladicidad">Clase Resbaladicidad (CTE)</label><input id="clase_resbaladicidad" type="text" value="" readonly></div>
-                            <div class="campo"><label for="valor_rd">Resistencia al deslizamiento (Rd)</label><input type="text" id="valor_rd" value="" readonly></div>
-                            <div class="campo"><label for="uso_transito">Clasificación de uso</label><input type="text" id="uso_transito" value="tránsito intenso" readonly></div>
-                            <div class="campo"><label for="resistencia_manchas">Resistencia a manchas</label><input type="text" id="resistencia_manchas" value="" readonly></div>
-                            <div class="campo"><label for="resistencia_quimica">Resistencia a ataques químicos</label><input type="text" id="resistencia_quimica" value="" readonly></div>
-                            <div class="campo"><label for="modulo_rotura">Módulo de rotura (N/mm²)</label><input type="text" id="modulo_rotura" value="" readonly></div>
-                            <div class="campo"><label for="carga_rotura">Carga de rotura (N)</label><input type="text" id="carga_rotura" value="" readonly></div>
-                        </fieldset>
-
                         <fieldset>
                             <legend>4. Materiales de Colocación (Editable)</legend>
                             <div class="campo"><label for="adhesivo_nombre">Nombre del Adhesivo</label><input type="text" id="adhesivo_nombre" value="MARCA ADHESIVO"></div>
@@ -395,32 +428,37 @@
                             <div class="campo"><label for="junta_maxima">Ancho máximo de junta (mm)</label><input type="number" id="junta_maxima" value="15"></div>
                             <div class="campo"><label for="junta_perimetral">Ancho mínimo junta perimetral (mm)</label><input type="number" id="junta_perimetral" value="5"></div>
                         </fieldset>
+
+                        <!-- CAMPOS OCULTOS PARA ALMACENAR DATOS DEL PRODUCTO -->
+                        <input type="hidden" id="tipo_material"><input type="hidden" id="fabricante" value="PAMESA CERÁMICA"><input type="hidden" id="coleccion"><input type="hidden" id="color"><input type="hidden" id="aspecto"><input type="hidden" id="dim_ancho"><input type="hidden" id="dim_alto"><input type="hidden" id="dim_espesor"><input type="hidden" id="desviacion" value="0,15%"><input type="hidden" id="norma_dimensiones" value="UNE-EN ISO10545-2, ISO 13006:2018 UNE-EN 14411:2016"><input type="hidden" id="destonificado"><input type="hidden" id="absorcion_agua"><input type="hidden" id="clase_resbaladicidad"><input type="hidden" id="valor_rd"><input type="hidden" id="uso_transito" value="tránsito intenso"><input type="hidden" id="resistencia_manchas"><input type="hidden" id="resistencia_quimica"><input type="hidden" id="modulo_rotura"><input type="hidden" id="carga_rotura">
                     </form>
                 </div>
             </div>
             <div class="panel resultado-panel">
                 <div class="panel-header">
                     <div class="resultado-acciones">
-                        <h4 class="acciones-titulo">Prescripción Generada</h4>
+                        <h4 class="acciones-titulo">Resultado</h4>
                         <div class="grupo-botones">
                             <button id="btn-copiar" class="btn-accion">Copiar Texto</button>
                             <button id="btn-descargar-txt" class="btn-accion">Descargar .txt</button>
                             <button id="btn-descargar-pdf" class="btn-accion">Descargar PDF</button>
                             <a id="link-dap" href="#" target="_blank" class="link-accion secundario">Ver DAP</a>
                             <a id="link-dop" href="#" target="_blank" class="link-accion secundario">Ver DoP</a>
-                            <!-- ===== INICIO DE BOTONES AÑADIDOS ===== -->
-                            <a href="https://www.pamesa.com/ERP/4.0/empresas/151/045/ficheros/t00030006/44/RECOMENDACIONES_PARA_LA_INSTALACION_DE_PRODUCTOS_CERAMICOS__PGEv3.pdf" target="_blank" class="link-accion secundario">Recomendaciones de instalación</a>
-                            <a href="https://www.pamesa.com/ERP/4.0/empresas/151/045/ficheros/t00030006/99/Pamesa_I_ES-Baldosa_2024.pdf" target="_blank" class="link-accion secundario">Instrucciones de seguridad</a>
-                            <!-- ===== FIN DE BOTONES AÑADIDOS ===== -->
+                            <a href="https://www.pamesa.com/ERP/4.0/empresas/151/045/ficheros/t00030006/44/RECOMENDACIONES_PARA_LA_INSTALACION_DE_PRODUCTOS_CERAMICOS__PGEv3.pdf" target="_blank" class="link-accion secundario">Recomendaciones</a>
+                            <a href="https://www.pamesa.com/ERP/4.0/empresas/151/045/ficheros/t00030006/99/Pamesa_I_ES-Baldosa_2024.pdf" target="_blank" class="link-accion secundario">Seguridad</a>
                         </div>
                     </div>
                 </div>
                 <div class="panel-body">
+                     <div id="product-results-list">
+                        <!-- Las tarjetas de producto se generarán aquí -->
+                     </div>
+
                     <div id="imagen-producto-container" class="oculto">
                          <div class="image-wrapper">
                              <div id="image-placeholder">
-                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                                 <span>Imagen de producto no disponible</span>
+                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                                 <span>Pasa el ratón sobre un producto para previsualizar</span>
                              </div>
                             <img id="imagen-producto" src="" alt="Imagen del producto seleccionado" class="oculto">
                             <button id="btn-descargar-imagen" class="btn-accion secundario oculto">Descargar Imagen</button>
@@ -428,10 +466,11 @@
                     </div>
                     
                     <div id="empty-state">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                        <h3>Generador de Prescripciones</h3>
-                        <p>Busca el producto ideal para tu proyecto utilizando los filtros.<br>Selecciónalo en el listado para generar su prescripción al instante.<br>Podrás copiar, descargar y consultar toda su documentación.</p>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        <h3>Bienvenido al Asistente de Prescripciones</h3>
+                        <p>Utiliza los filtros de la izquierda para encontrar el producto ideal.<br>Los resultados aparecerán aquí al instante.</p>
                     </div>
+
                     <pre id="texto-generado" class="oculto"></pre>
                 </div>
             </div>
@@ -443,10 +482,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- ELEMENTOS DEL DOM ---
     const ui = {
         formulario: document.getElementById('formulario-prescripcion'),
+        camposEditablesContainer: document.getElementById('formulario-campos'),
         output: document.getElementById('texto-generado'),
         emptyState: document.getElementById('empty-state'),
+        productResultsList: document.getElementById('product-results-list'),
         imageContainer: document.getElementById('imagen-producto-container'),
-        productSelector: document.getElementById('product-selector'),
         statusMessage: document.getElementById('status-message'),
         btnClearFilters: document.getElementById('btn-clear-filters'),
         advancedFiltersToggle: document.getElementById('filtros-avanzados-toggle'),
@@ -468,6 +508,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- ESTADO DE LA APLICACIÓN ---
     let csvData = [];
+    let selectedProductIndex = null;
     const revestimientoTypes = [
         'Revestimiento pasta blanca no rectificada',
         'Revestimiento pasta roja no rectificado',
@@ -478,44 +519,33 @@ document.addEventListener('DOMContentLoaded', function() {
     const pavimentoTemplate = `Suministro y ejecución de pavimento con <span class="resaltado">{tipo_material}</span>, de aspecto <span class="resaltado">{aspecto}</span>, colección <span class="resaltado">{coleccion}</span>, color <span class="resaltado">{color}</span> de <span class="resaltado">{fabricante}</span>. Conformado por prensado en seco, tratado en monococción a temperatura de 1200ºC.\n\nCerámica con dimensiones nominales de (Ancho x Alto x Espesor) <span class="resaltado">{dim_ancho}</span>x<span class="resaltado">{dim_alto}</span>x<span class="resaltado">{dim_espesor}</span> cm, desviación de longitud/anchura, rectitud de lados, ortogonalidad y planimetría inferior a <span class="resaltado">{desviacion}</span> (<span class="resaltado">{norma_dimensiones}</span>).\n\nDestonificado <span class="resaltado">{destonificado}</span>, con una absorción de agua muy baja <span class="resaltado">{absorcion_agua}</span> según ISO 10545-3. Clasificación de suelos según su resbaladicidad <span class="resaltado">{clase_resbaladicidad}</span> (CTE DBSUA), resistencia al deslizamiento <span class="resaltado">{valor_rd}</span> (UNE 41901:2017 EX). Módulo de rotura <span class="resaltado">{modulo_rotura}</span> (ISO-13006:2018 UNE-EN 14411:2016) y carga de rotura <span class="resaltado">{carga_rotura}</span> según ISO10545-4.\n\nPavimento de <span class="resaltado">{uso_transito}</span> conforme a la clasificación de baldosas según uso de la Guía de la Baldosa Cerámica (Documento reconocido DRB 01/11), resistente al choque térmico, al cuarteo, a la helada, a las manchas <span class="resaltado">{resistencia_manchas}</span>, según ISO 10545-14 y a los ataques químicos: <span class="resaltado">{resistencia_quimica}</span>, según ISO 10545-13.\n\nContribuye a los estándares de construcción sostenible y saludable (LEED, BREEAM, WELL) gracias a disponer de Declaración Ambiental de Producto propia (DAP), no ser una fuente emisora de sustancias peligrosas COV’s ni formaldehidos, así como por disponer de contenido de material reciclado >6%. Disponible marcado CE.\n\nCerámica recibida sobre recrecido cementoso sin calefacción radiante (no incluido), apto para la colocación en capa fina y tránsito previsto, con adhesivo de altas prestaciones con excelente adherencia y deformabilidad, <span class="resaltado">{adhesivo_nombre}</span> de <span class="resaltado">{adhesivo_fabricante}</span>, tipo <span class="resaltado">{adhesivo_tipo}</span>, según EN 12004, prescrito de acuerdo a las indicaciones de la UNE 138002 y rejuntadas con mortero de juntas cementoso de fraguado y endurecimiento rápido, <span class="resaltado">{mortero_nombre}</span> de <span class="resaltado">{mortero_fabricante}</span>, según EN 13888, para juntas de hasta <span class="resaltado">{junta_maxima}</span>mm.\n\nI/p.p medios auxiliares. Utilización de p/p de Crucetas Autonivelantes (no incluidas), formación de juntas perimetrales continuas, de anchura no menor de <span class="resaltado">{junta_perimetral}</span> mm, en los límites con paredes, pilares exentos y elevaciones de nivel y, en su caso, juntas de partición intermedias. Respetar juntas estructurales existentes en el soporte. Incluso limpieza y comprobación del grado de humedad de la base. Replanteo de niveles. Replanteo de la disposición de las baldosas y juntas de movimiento. Aplicación del adhesivo. Colocación de las crucetas. Colocación de las baldosas con llana dentada y doble encolado. Relleno, si procede, de las juntas de partición intermedias. Rejuntado. Eliminación y limpieza del material sobrante. Limpieza inicial del pavimento al finalizar la obra y protección hasta entrega de obra. Todo el proceso de colocación se efectuará según indicaciones de la dirección facultativa y norma UNE 138002.`;
     const revestimientoTemplate = `Suministro y ejecución de revestimiento con <span class="resaltado">{tipo_material}</span>, de aspecto <span class="resaltado">{aspecto}</span>, colección <span class="resaltado">{coleccion}</span>, color <span class="resaltado">{color}</span> de <span class="resaltado">{fabricante}</span>.\n\nCerámica con dimensiones nominales (Ancho x Largo x Espesor) <span class="resaltado">{dim_ancho}</span>x<span class="resaltado">{dim_alto}</span>x<span class="resaltado">{dim_espesor}</span> cm, desviación de longitud/anchura, rectitud de lados, ortogonalidad y planimetría inferior a <span class="resaltado">{desviacion}</span> (<span class="resaltado">{norma_dimensiones}</span>).\n\nDestonificado <span class="resaltado">{destonificado}</span> con una absorción de agua <span class="resaltado">{absorcion_agua}</span>, módulo de rotura <span class="resaltado">{modulo_rotura}</span> y fuerza de rotura <span class="resaltado">{carga_rotura}</span> (ISO-13006:2018 UNE-EN 14411:2016).\n\nContribuye a los estándares de construcción sostenible y saludable (LEED, BREEAM, WELL) gracias a disponer de Declaración Ambiental de Producto propia (DAP), no ser una fuente emisora de sustancias peligrosas COVs ni formaldehidos, así como por disponer de contenido de material reciclado >6%.\n\nColocación en capa fina, con adhesivo cementoso tecnológico avanzado, <span class="resaltado">{adhesivo_nombre}</span> de <span class="resaltado">{adhesivo_fabricante}</span>, tipo <span class="resaltado">{adhesivo_tipo}</span> según EN 12004, prescrito de acuerdo a las indicaciones de la UNE 138002 y rejuntadas con mortero de juntas cementoso de fraguado y endurecimiento rápido, <span class="resaltado">{mortero_nombre}</span> de <span class="resaltado">{mortero_fabricante}</span>, según EN 13888, para juntas de hasta <span class="resaltado">{junta_maxima}</span> mm.\n\nI/p.p medios auxiliares. Utilización de p/p de Crucetas Autonivelantes (no incluidas), formación de juntas perimetrales continuas, de anchura no menor de <span class="resaltado">{junta_perimetral}</span> mm, en los límites con paredes, pilares exentos y elevaciones de nivel y, en su caso, juntas de partición intermedias. Respetar juntas estructurales existentes en el soporte. Limpieza y comprobación del grado de humedad de la base. Replanteo de niveles. Replanteo de la disposición de las baldosas y juntas de movimiento. Aplicación del adhesivo. Colocación de las crucetas. Colocación de las baldosas con llana dentada y doble encolado. Relleno, si procede, de las juntas de partición intermedias. Rejuntado. Eliminación y limpieza del material sobrante. Limpieza inicial del pavimento al finalizar la obra y protección hasta entrega de obra. Todo el proceso de colocación se efectuará según indicaciones de la dirección facultativa y norma UNE 138002.`;
 
-    // --- GESTORES DE VISTAS ---
-    function showWelcomeView() {
+    // --- LÓGICA DE VISTAS Y ESTADO ---
+    function displayEmptyState() {
+        selectedProductIndex = null;
+        ui.productResultsList.innerHTML = '';
         ui.imageContainer.classList.add('oculto');
         ui.output.classList.add('oculto');
+        ui.camposEditablesContainer.classList.add('oculto');
         ui.emptyState.classList.remove('oculto');
+        ui.formulario.reset();
     }
-
-    function showProductView() {
+    
+    function displayProductView() {
         ui.emptyState.classList.add('oculto');
         ui.imageContainer.classList.remove('oculto');
         ui.output.classList.remove('oculto');
+        ui.camposEditablesContainer.classList.remove('oculto');
     }
 
-    // --- LÓGICA PRINCIPAL ---
-    function handleProductSelection() {
-        const selectedIndex = this.value;
-        if (selectedIndex === "" || !csvData[selectedIndex]) {
+    // --- LÓGICA DE DATOS Y RENDERIZADO ---
+    function displayProductDetails(product) {
+        if (!product) {
             displayEmptyState();
-        } else {
-            const product = csvData[parseInt(selectedIndex, 10)];
-            displayProductData(product);
+            return;
         }
-    }
-    
-    function displayEmptyState() {
-        showWelcomeView();
-        ui.formulario.reset();
-        document.getElementById('fabricante').value = 'PAMESA CERÁMICA';
-        document.getElementById('desviacion').value = '0,15%';
-        document.getElementById('norma_dimensiones').value = 'UNE-EN ISO10545-2, ISO 13006:2018 UNE-EN 14411:2016';
-        document.getElementById('uso_transito').value = 'tránsito intenso';
-        document.getElementById('label-dim-alto').textContent = 'Alto (cm)';
-        ui.linkDAP.href = '#';
-        ui.linkDOP.href = '#';
-    }
+        displayProductView();
 
-    function displayProductData(product) {
-        showProductView();
+        // Rellena los campos ocultos del formulario con los datos del producto
         const productType = product['Desc_Familia_web'] || '';
         document.getElementById('tipo_material').value = productType;
         document.getElementById('coleccion').value = product['MODELO'] || '';
@@ -532,18 +562,38 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('resistencia_quimica').value = product['Resistencia_a_ataques_químicos'] || '';
         document.getElementById('modulo_rotura').value = product['iso_10545_4_resistencia_flexion'] || '';
         document.getElementById('carga_rotura').value = product['iso_10545_4_fuerza_rotura'] || '';
+        
+        // Lógica de valores editables
         document.getElementById('adhesivo_tipo').value = product['Adhesivo'] || 'C2';
+        document.getElementById('junta_maxima').value = revestimientoTypes.includes(productType) ? "4" : "15";
+        
+        // Actualiza los links
         ui.linkDAP.href = product['declaracion_ambiental_producto'] || '#';
         ui.linkDOP.href = product['declaracion_prestaciones'] || '#';
 
-        if (revestimientoTypes.includes(productType)) {
-            document.getElementById('junta_maxima').value = "4";
-            document.getElementById('label-dim-alto').textContent = 'Largo (cm)';
-        } else {
-            document.getElementById('junta_maxima').value = "15";
-            document.getElementById('label-dim-alto').textContent = 'Alto (cm)';
-        }
+        // Actualiza la imagen
+        previewProductImage(product);
+        
+        generarTexto();
+    }
 
+    function generarTexto() {
+        if (selectedProductIndex === null) return;
+        const values = {};
+        for (let el of ui.formulario.elements) { if (el.id) values[el.id] = el.value; }
+        
+        const selectedProductType = values['tipo_material'];
+        let activeTemplate = revestimientoTypes.includes(selectedProductType) ? revestimientoTemplate : pavimentoTemplate;
+        
+        let textoHTML = activeTemplate;
+        for (const key in values) {
+            textoHTML = textoHTML.replace(new RegExp(`{${key}}`, 'g'), values[key] || '[DATO NO ESPECIFICADO]');
+        }
+        ui.output.innerHTML = textoHTML;
+    }
+
+    function previewProductImage(product) {
+        ui.imageContainer.classList.remove('oculto');
         const imageUrl = product['imagen_url_web'];
         if (imageUrl && imageUrl.trim() !== "") {
             ui.imagePlaceholder.classList.add('oculto');
@@ -555,70 +605,120 @@ document.addEventListener('DOMContentLoaded', function() {
             ui.imagenProducto.classList.add('oculto');
             ui.btnDescargarImagen.classList.add('oculto');
         }
-        generarTexto();
     }
 
-    function generarTexto() {
-        if (ui.productSelector.value === "") return;
-        const values = {};
-        for (let el of ui.formulario.elements) { if (el.id) values[el.id] = el.value; }
-        const selectedProductType = document.getElementById('tipo_material').value;
-        let activeTemplate = revestimientoTypes.includes(selectedProductType) ? revestimientoTemplate : pavimentoTemplate;
-        let textoHTML = activeTemplate;
-        for (const key in values) {
-            textoHTML = textoHTML.replace(new RegExp(`{${key}}`, 'g'), values[key] || '[DATO NO ESPECIFICADO]');
-        }
-        ui.output.innerHTML = textoHTML;
-    }
-
-    // --- FILTROS Y CSV ---
+    // --- LÓGICA DE FILTROS ---
     function updateFiltersAndProductList() {
-        let tempFilteredProducts = csvData.filter(product => {
+        // 1. Filtrar por checkboxes rápidos
+        let filteredProducts = csvData.filter(product => {
             const is20mm = !document.getElementById('filtro-20mm').checked || (product['Espesor(mm)'] && product['Espesor(mm)'].startsWith('2'));
-            const isExt = !document.getElementById('filtro-ext').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('EXT'));
+            const isExt = !document.getElementById('filtro-ext').checked || (product['Acabado'] && product['Acabado'].toUpperCase() === 'EXT');
             const isDup = !document.getElementById('filtro-dup').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('DUP'));
             return is20mm && isExt && isDup;
         });
         
+        // 2. Obtener los valores seleccionados en los <select>
         const activeSelectFilters = {};
         Object.keys(ui.allSelectFilters).forEach(key => {
-            if (ui.allSelectFilters[key].value) activeSelectFilters[key] = ui.allSelectFilters[key].value;
+            if (ui.allSelectFilters[key].value) {
+                activeSelectFilters[key] = ui.allSelectFilters[key].value;
+            }
         });
 
-        const finalFilteredProducts = tempFilteredProducts.filter(product => {
-            return Object.keys(activeSelectFilters).every(key => product[key] === activeSelectFilters[key]);
-        });
-        populateProductSelector(finalFilteredProducts);
+        // 3. Filtrar por los <select> activos
+        if (Object.keys(activeSelectFilters).length > 0) {
+            filteredProducts = filteredProducts.filter(product => {
+                return Object.keys(activeSelectFilters).every(key => product[key] === activeSelectFilters[key]);
+            });
+        }
+        
+        // 4. Actualizar las opciones de los <select> con contadores
         Object.keys(ui.allSelectFilters).forEach(currentKey => {
             const otherFilters = { ...activeSelectFilters };
             delete otherFilters[currentKey];
-            const availableDataForThisFilter = tempFilteredProducts.filter(product => Object.keys(otherFilters).every(key => product[key] === otherFilters[key]));
-            const uniqueValues = [...new Set(availableDataForThisFilter.map(item => item[currentKey]))].filter(Boolean).sort();
-            repopulateSelectWithOptions(ui.allSelectFilters[currentKey], uniqueValues);
+            
+            // Para obtener las opciones de un filtro, partimos de los productos filtrados por los checkboxes y los *otros* selects.
+            const availableProductsForThisSelect = csvData.filter(product => {
+                const quickFiltersPass = (!document.getElementById('filtro-20mm').checked || (product['Espesor(mm)'] && product['Espesor(mm)'].startsWith('2'))) &&
+                                         (!document.getElementById('filtro-ext').checked || (product['Acabado'] && product['Acabado'].toUpperCase() === 'EXT')) &&
+                                         (!document.getElementById('filtro-dup').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('DUP')));
+                const otherSelectsPass = Object.keys(otherFilters).every(key => product[key] === otherFilters[key]);
+                return quickFiltersPass && otherSelectsPass;
+            });
+            
+            repopulateSelectWithOptions(ui.allSelectFilters[currentKey], availableProductsForThisSelect);
         });
-        ui.statusMessage.textContent = `Mostrando ${finalFilteredProducts.length} de ${csvData.length} productos.`;
+
+        // 5. Renderizar la lista de resultados y actualizar mensaje de estado
+        renderProductList(filteredProducts);
+        ui.statusMessage.textContent = `${filteredProducts.length} productos encontrados.`;
     }
     
-    function repopulateSelectWithOptions(selectElement, options) {
+    function repopulateSelectWithOptions(selectElement, availableProducts) {
         const currentValue = selectElement.value;
-        selectElement.innerHTML = `<option value="">Todos</option>`;
-        options.forEach(value => {
+        const csvCol = selectElement.dataset.csvCol;
+
+        // Contar ocurrencias de cada opción
+        const counts = availableProducts.reduce((acc, product) => {
+            const value = product[csvCol];
+            if (value) {
+                acc[value] = (acc[value] || 0) + 1;
+            }
+            return acc;
+        }, {});
+        
+        const sortedOptions = Object.keys(counts).sort();
+
+        selectElement.innerHTML = `<option value="">Todos (${availableProducts.length})</option>`;
+        sortedOptions.forEach(value => {
             const option = document.createElement('option');
-            option.value = option.textContent = value;
+            option.value = value;
+            option.textContent = `${value} (${counts[value]})`;
             if (value === currentValue) option.selected = true;
             selectElement.appendChild(option);
         });
     }
 
-    function populateProductSelector(products) {
-        ui.productSelector.innerHTML = '<option value="">-- Seleccione un producto --</option>';
-        ui.productSelector.disabled = products.length === 0;
+    function renderProductList(products) {
+        ui.productResultsList.innerHTML = '';
+        if (products.length === 0) {
+            ui.productResultsList.innerHTML = '<p style="text-align:center; padding: 20px; color: var(--color-texto-secundario);">No se encontraron productos con estos filtros.</p>';
+            return;
+        }
+
         products.forEach(product => {
             const originalIndex = csvData.findIndex(p => p === product);
-            const option = document.createElement('option');
-            option.value = originalIndex;
-            option.textContent = `${product.MODELO || 'S/M'} - ${product.COLOR || 'S/C'} - ${product.FORMATO || 'S/F'}`;
-            ui.productSelector.appendChild(option);
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            card.dataset.index = originalIndex;
+
+            if (originalIndex === selectedProductIndex) {
+                card.classList.add('selected');
+            }
+
+            const title = document.createElement('h5');
+            title.className = 'card-title';
+            title.textContent = `${product.MODELO || 'S/M'} - ${product.COLOR || 'S/C'}`;
+
+            const diffs = document.createElement('p');
+            diffs.className = 'card-differentiators';
+            diffs.textContent = `Formato: ${product.FORMATO || 'N/A'} | Acabado: ${product.Acabado || 'N/A'}`;
+
+            const specs = document.createElement('div');
+            specs.className = 'card-specs';
+            const spec1 = product['Desc_Familia_web'] ? `<span class="spec-tag">${product['Desc_Familia_web']}</span>` : '';
+            const spec2 = product['en_16165_anexo_c_deslizamiento_pendulo'] ? `<span class="spec-tag">CLASE ${product['en_16165_anexo_c_deslizamiento_pendulo']}</span>` : '';
+            const spec3 = product['Espesor(mm)'] ? `<span class="spec-tag">${product['Espesor(mm)']}mm</span>` : '';
+            specs.innerHTML = spec1 + spec2 + spec3;
+
+            card.appendChild(title);
+            card.appendChild(diffs);
+            card.appendChild(specs);
+
+            card.addEventListener('mouseover', handleCardMouseOver);
+            card.addEventListener('click', handleCardClick);
+
+            ui.productResultsList.appendChild(card);
         });
     }
     
@@ -626,9 +726,8 @@ document.addEventListener('DOMContentLoaded', function() {
          ui.quickFilters.forEach(qf => qf.checked = false);
          Object.values(ui.allSelectFilters).forEach(select => select.value = '');
          if(ui.advancedFiltersToggle.classList.contains('open')) toggleAdvancedFilters();
+         displayEmptyState();
          updateFiltersAndProductList();
-         ui.productSelector.value = "";
-         handleProductSelection.call(ui.productSelector);
     }
     
     function toggleAdvancedFilters() {
@@ -636,6 +735,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ui.advancedFiltersContent.style.display = ui.advancedFiltersContent.style.display === 'block' ? 'none' : 'block';
     }
 
+    // --- CARGA INICIAL DE DATOS ---
     async function loadDataAndInitializeApp() {
         const csvFilePath = 'BD_contrac_presto3.csv'; 
         
@@ -643,19 +743,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         try {
             const response = await fetch(csvFilePath);
-
-            if (!response.ok) {
-                throw new Error(`No se pudo cargar el archivo: ${response.statusText}`);
-            }
-
+            if (!response.ok) throw new Error(`No se pudo cargar el archivo: ${response.statusText}`);
+            
             const csvText = await response.text();
             csvData = parseCSV(csvText);
-
-            if (csvData.length === 0) {
-                throw new Error("No se encontraron datos válidos en el archivo CSV.");
-            }
-
-            ui.statusMessage.textContent = `Se han cargado ${csvData.length} productos.`;
+            
+            if (csvData.length === 0) throw new Error("No se encontraron datos válidos en el archivo CSV.");
+            
             Object.values(ui.allSelectFilters).forEach(select => { select.disabled = false; });
             updateFiltersAndProductList();
         
@@ -688,8 +782,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- FUNCIONALIDAD PDF ---
     async function generarPDF() {
-        // 1. Validación
-        if (ui.output.classList.contains('oculto') || !ui.productSelector.value) {
+        if (selectedProductIndex === null) {
             alert("Por favor, selecciona un producto para generar el PDF.");
             return;
         }
@@ -699,20 +792,13 @@ document.addEventListener('DOMContentLoaded', function() {
         ui.btnDescargarPdf.disabled = true;
 
         try {
-            // 2. Inicializar jsPDF A4
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('p', 'mm', 'a4');
-
-            // --- CONSTANTES DE DISEÑO ---
-            const MARGIN_LEFT = 20;
-            const MARGIN_TOP = 20;
-            const MARGIN_RIGHT = 20;
-            const PAGE_HEIGHT = 297;
-            const PAGE_WIDTH = 210;
+            const MARGIN_LEFT = 20, MARGIN_TOP = 20, MARGIN_RIGHT = 20;
+            const PAGE_HEIGHT = 297, PAGE_WIDTH = 210;
             const CONTENT_WIDTH = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT;
             let currentY = MARGIN_TOP;
 
-            // --- 3. CARGA DE IMÁGENES ---
             const imageToBase64 = async (url) => {
                 try {
                     if (!url || url.trim() === '') return null;
@@ -730,33 +816,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             };
             
-            // Cargar logo local y producto
             const logoBase64 = await imageToBase64('LOGO-PAMESA.jpg');
             const productoBase64 = await imageToBase64(ui.imagenProducto.src);
+            const product = csvData[selectedProductIndex];
 
-            // --- 4. MAQUETACIÓN ---
-
-            // A) ENCABEZADO
-            if (logoBase64) {
-                // Logo Pamesa a la izquierda, ancho 50mm
-                doc.addImage(logoBase64, 'JPEG', MARGIN_LEFT, 12, 50, 10);
-            }
-            
-            // Título del documento a la derecha
+            // ENCABEZADO
+            if (logoBase64) doc.addImage(logoBase64, 'JPEG', MARGIN_LEFT, 12, 50, 10);
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(14);
             doc.setTextColor('#222222');
             doc.text('Prescripción Técnica de Obra', PAGE_WIDTH - MARGIN_RIGHT, 18, { align: 'right' });
-            
             currentY += 15;
-            // Línea divisoria roja corporativa
             doc.setDrawColor('#ce1719');
             doc.setLineWidth(0.5);
             doc.line(MARGIN_LEFT, currentY, PAGE_WIDTH - MARGIN_RIGHT, currentY);
             currentY += 15;
 
-            // B) TÍTULO DEL PRODUCTO
-            const product = csvData[parseInt(ui.productSelector.value, 10)];
+            // TÍTULO
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(16);
             doc.setTextColor('#ce1719');
@@ -764,99 +840,74 @@ document.addEventListener('DOMContentLoaded', function() {
             doc.text(title, MARGIN_LEFT, currentY);
             currentY += 10;
 
-            // C) IMAGEN DEL PRODUCTO
-            // Lógica: Si hay imagen, la ponemos a la izquierda y el texto fluye a la derecha.
-            // Si no hay, el texto ocupa todo el ancho.
+            // IMAGEN Y TEXTO
             let textX = MARGIN_LEFT;
             let textWidth = CONTENT_WIDTH;
-            const imgWidth = 70;
-            const imgHeight = 70;
-            const gap = 10;
+            const imgWidth = 70, imgHeight = 70, gap = 10;
             const imgBottomY = currentY + imgHeight + 10;
-
             if (productoBase64) {
                 doc.addImage(productoBase64, 'JPEG', MARGIN_LEFT, currentY, imgWidth, imgHeight);
                 textX = MARGIN_LEFT + imgWidth + gap;
                 textWidth = CONTENT_WIDTH - imgWidth - gap;
             }
             
-            // D) PROCESADO DE TEXTO
-            // Recuperamos el HTML generado
             const textoPrescripcion = document.getElementById('texto-generado').innerHTML;
-            // Reemplazamos las etiquetas HTML por marcadores especiales para el parser
-            // <br> -> saltos de línea
-            // <span class="resaltado"> -> MARCADOR_INICIO ... MARCADOR_FIN
-            let textoProcesado = textoPrescripcion
-                .replace(/<br\s*\/?>/gi, '\n')
-                .replace(/<span class="resaltado">/g, '##START##')
-                .replace(/<\/span>/g, '##END##')
-                // Decodificar entidades HTML básicas si las hubiera
-                .replace(/&nbsp;/g, ' ');
-
+            let textoProcesado = textoPrescripcion.replace(/<br\s*\/?>/gi, '\n').replace(/<span class="resaltado">/g, '##START##').replace(/<\/span>/g, '##END##').replace(/&nbsp;/g, ' ');
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(10);
             doc.setTextColor('#333333');
-            
-            // Dividimos el texto en párrafos para manejar mejor los saltos
             const paragraphs = textoProcesado.split('\n');
-            
-            // Altura de línea
             const lineHeight = 5; 
             
-            paragraphs.forEach((paragraph) => {
-                // Si el párrafo está vacío, añadimos espacio y continuamos
+            const printLineBuffer = (doc, buffer, x, y) => {
+                let currentX = x;
+                buffer.forEach(item => {
+                    doc.setFont('helvetica', item.bold ? 'bold' : 'normal');
+                    doc.setTextColor(item.bold ? '#ce1719' : '#333333');
+                    doc.text(item.text, currentX, y);
+                    currentX += doc.getStringUnitWidth(item.text) * doc.getFontSize() / doc.internal.scaleFactor;
+                });
+            };
+
+            const checkPageBreak = () => {
+                if (productoBase64 && currentY > imgBottomY && textWidth < CONTENT_WIDTH) {
+                    textX = MARGIN_LEFT;
+                    textWidth = CONTENT_WIDTH;
+                }
+                if (currentY > PAGE_HEIGHT - 25) {
+                    doc.addPage();
+                    currentY = MARGIN_TOP;
+                    textX = MARGIN_LEFT;
+                    textWidth = CONTENT_WIDTH;
+                }
+            };
+
+            paragraphs.forEach(paragraph => {
                 if (paragraph.trim() === '') {
                     currentY += lineHeight;
                     return;
                 }
-
-                // Dividimos el párrafo en partes (normales y resaltadas)
                 const parts = paragraph.split(/(##START##|##END##)/g);
                 let isBold = false;
-                
-                // Construir array de "tokens" con texto y estilo
                 let tokens = [];
                 parts.forEach(part => {
                     if (part === '##START##') isBold = true;
                     else if (part === '##END##') isBold = false;
-                    else if (part !== '') {
-                        tokens.push({ text: part, bold: isBold });
-                    }
+                    else if (part !== '') tokens.push({ text: part, bold: isBold });
                 });
-
-                // Lógica de dibujado palabra por palabra (word wrapping manual básico)
-                // para soportar cambios de estilo dentro de la misma línea
                 let lineBuffer = [];
                 let currentLineWidth = 0;
-
-                // Aplanar tokens en palabras
                 tokens.forEach(token => {
                     const words = token.text.split(' ');
                     words.forEach((word, index) => {
-                        // Añadir espacio si no es la primera palabra del token
-                        // o si hay más palabras en el token
-                        let wordText = word;
-                        if (index < words.length - 1 || token.text.endsWith(' ')) {
-                             wordText += ' '; 
-                        }
-                        // Corregir espaciado entre tokens
-                        if (index === 0 && lineBuffer.length > 0 && !lineBuffer[lineBuffer.length-1].text.endsWith(' ')) {
-                            wordText = ' ' + wordText;
-                        }
-
-                        // Calcular ancho de esta palabra en el estilo actual
+                        let wordText = word + (index < words.length - 1 || token.text.endsWith(' ') ? ' ' : '');
+                        if (index === 0 && lineBuffer.length > 0 && !lineBuffer[lineBuffer.length - 1].text.endsWith(' ')) wordText = ' ' + wordText;
                         doc.setFont('helvetica', token.bold ? 'bold' : 'normal');
                         const wordWidth = doc.getStringUnitWidth(wordText) * doc.getFontSize() / doc.internal.scaleFactor;
-
                         if (currentLineWidth + wordWidth > textWidth) {
-                            // Imprimir línea actual
                             printLineBuffer(doc, lineBuffer, textX, currentY);
                             currentY += lineHeight;
-                            
-                            // Chequear salto de página o superación de imagen
                             checkPageBreak();
-                            
-                            // Iniciar nueva línea
                             lineBuffer = [{ text: wordText.trimStart(), bold: token.bold, width: wordWidth }];
                             currentLineWidth = wordWidth;
                         } else {
@@ -865,43 +916,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     });
                 });
-                
-                // Imprimir lo que queda del buffer (última línea del párrafo)
                 if (lineBuffer.length > 0) {
                     printLineBuffer(doc, lineBuffer, textX, currentY);
-                    currentY += lineHeight * 1.5; // Un poco más de espacio entre párrafos
+                    currentY += lineHeight * 1.5;
                     checkPageBreak();
                 }
             });
 
-            // Funciones auxiliares dentro del scope de PDF
-            function printLineBuffer(doc, buffer, x, y) {
-                let currentX = x;
-                buffer.forEach(item => {
-                    doc.setFont('helvetica', item.bold ? 'bold' : 'normal');
-                    doc.setTextColor(item.bold ? '#ce1719' : '#333333');
-                    doc.text(item.text, currentX, y);
-                    currentX += doc.getStringUnitWidth(item.text) * doc.getFontSize() / doc.internal.scaleFactor;
-                });
-            }
-
-            function checkPageBreak() {
-                // Si tenemos imagen y bajamos más allá de su altura, recuperamos el ancho completo
-                if (productoBase64 && currentY > imgBottomY && textWidth < CONTENT_WIDTH) {
-                    textX = MARGIN_LEFT;
-                    textWidth = CONTENT_WIDTH;
-                }
-                
-                // Salto de página
-                if (currentY > PAGE_HEIGHT - 25) { // 25mm margen inferior
-                    doc.addPage();
-                    currentY = MARGIN_TOP;
-                    textX = MARGIN_LEFT;
-                    textWidth = CONTENT_WIDTH;
-                }
-            }
-
-            // E) PIE DE PÁGINA
+            // PIE DE PÁGINA
             const pageCount = doc.internal.getNumberOfPages();
             for(let i = 1; i <= pageCount; i++) {
                 doc.setPage(i);
@@ -912,10 +934,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 doc.text(footerText, PAGE_WIDTH / 2, PAGE_HEIGHT - 10, { align: 'center' });
             }
 
-            // 5. GUARDAR ARCHIVO
             const fileName = `prescripcion_Pamesa_${product.MODELO || 'modelo'}_${product.COLOR || 'color'}.pdf`;
             doc.save(fileName.replace(/[/\\?%*:|"<>]/g, '-'));
-
         } catch (error) {
             console.error("Error al generar el PDF:", error);
             alert("Ocurrió un error al generar el PDF. Revisa la consola para más detalles.");
@@ -925,23 +945,51 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- EVENTOS ---
+    // --- MANEJADORES DE EVENTOS ---
+    function handleCardMouseOver(event) {
+        const index = parseInt(event.currentTarget.dataset.index, 10);
+        if (csvData[index]) {
+            previewProductImage(csvData[index]);
+        }
+    }
+
+    function handleCardClick(event) {
+        const card = event.currentTarget;
+        const index = parseInt(card.dataset.index, 10);
+        
+        if (selectedProductIndex === index) {
+            // Deseleccionar si se hace clic en el mismo
+            selectedProductIndex = null;
+            card.classList.remove('selected');
+            displayEmptyState();
+            updateFiltersAndProductList(); // Re-render para quitar la selección
+        } else {
+            selectedProductIndex = index;
+            // Actualizar vista
+            const currentlySelected = document.querySelector('.product-card.selected');
+            if (currentlySelected) currentlySelected.classList.remove('selected');
+            card.classList.add('selected');
+            // Mostrar detalles
+            if (csvData[index]) {
+                displayProductDetails(csvData[index]);
+            }
+        }
+    }
+
     ui.imagenProducto.addEventListener('error', () => {
         ui.imagenProducto.classList.add('oculto');
         ui.imagePlaceholder.classList.remove('oculto');
         ui.btnDescargarImagen.classList.add('oculto');
     });
 
-    ui.productSelector.addEventListener('change', handleProductSelection);
     Array.from(ui.formulario.elements).forEach(el => el.addEventListener('input', generarTexto));
-    
     ui.btnClearFilters.addEventListener('click', clearFilters);
     ui.advancedFiltersToggle.addEventListener('click', toggleAdvancedFilters);
     Object.values(ui.allSelectFilters).forEach(select => select.addEventListener('change', updateFiltersAndProductList));
     ui.quickFilters.forEach(qf => qf.addEventListener('change', updateFiltersAndProductList));
     
     ui.btnCopiar.addEventListener('click', () => {
-        if (ui.output.classList.contains('oculto')) return;
+        if (selectedProductIndex === null || ui.output.classList.contains('oculto')) return;
         navigator.clipboard.writeText(ui.output.textContent).then(() => {
             const original = ui.btnCopiar.textContent;
             ui.btnCopiar.textContent = '¡Copiado!';
@@ -950,11 +998,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     ui.btnDescargarTxt.addEventListener('click', () => {
-        if (ui.output.classList.contains('oculto')) return;
+        if (selectedProductIndex === null || ui.output.classList.contains('oculto')) return;
         const blob = new Blob([ui.output.textContent], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        const product = csvData[parseInt(ui.productSelector.value, 10)];
+        const product = csvData[selectedProductIndex];
         const fileName = `prescripcion_Pamesa_${product.MODELO || 'modelo'}_${product.COLOR || 'color'}.txt`;
         a.href = url;
         a.download = fileName.replace(/[/\\?%*:|"<>]/g, '-');
@@ -962,19 +1010,18 @@ document.addEventListener('DOMContentLoaded', function() {
         URL.revokeObjectURL(url);
     });
     
-    // Listener para el botón PDF
     ui.btnDescargarPdf.addEventListener('click', generarPDF);
 
     ui.btnDescargarImagen.addEventListener('click', async () => {
         const imageUrl = ui.imagenProducto.src;
-        if (!imageUrl || imageUrl.endsWith('#') || ui.imagenProducto.classList.contains('oculto')) return;
+        if (selectedProductIndex === null || !imageUrl || ui.imagenProducto.classList.contains('oculto')) return;
         try {
             const response = await fetch(imageUrl);
             if (!response.ok) throw new Error('Network response was not ok');
             const blob = await response.blob();
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            const product = csvData[parseInt(ui.productSelector.value, 10)];
+            const product = csvData[selectedProductIndex];
             const fileName = `Pamesa_${product.MODELO || 'modelo'}_${product.COLOR || 'color'}.jpg`;
             a.href = url;
             a.download = fileName.replace(/[/\\?%*:|"<>]/g, '-');
