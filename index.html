@@ -345,6 +345,12 @@
                     <div class="panel-body">
                         <div id="formulario-busqueda">
                             
+                            <!-- Búsqueda por palabra clave -->
+                            <div class="campo">
+                                <label for="search-keyword">Búsqueda por palabra</label>
+                                <input type="text" id="search-keyword" placeholder="Buscar en Serie, Modelo, Efecto...">
+                            </div>
+
                             <!-- Filtros Rápidos -->
                             <div class="campo">
                                 <label>Características</label>
@@ -468,7 +474,7 @@
 
     </main>
 
-    <script>
+<script>
 document.addEventListener('DOMContentLoaded', function() {
     // --- ELEMENTOS DEL DOM ---
     const ui = {
@@ -481,6 +487,7 @@ document.addEventListener('DOMContentLoaded', function() {
         formulario: document.getElementById('formulario-prescripcion'),
         statusMessage: document.getElementById('status-message'),
         btnClearFilters: document.getElementById('btn-clear-filters'),
+        searchKeyword: document.getElementById('search-keyword'), // <<-- NUEVO
         quickFilters: Array.from(document.querySelectorAll('.filtro-toggle-input')),
         allSelectFilters: Array.from(document.querySelectorAll('select[data-csv-col]')).reduce((acc, select) => {
             acc[select.dataset.csvCol] = select;
@@ -609,11 +616,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- LÓGICA DE FILTROS (MODO BÚSQUEDA) ---
     function updateFiltersAndProductList() {
+        const keyword = ui.searchKeyword.value.trim().toUpperCase();
+
+        // Primera pasada de filtros (rápidos y por palabra)
         let filteredProducts = csvData.filter(product => {
+            const keywordMatch = !keyword ||
+                (product['Serie'] && product['Serie'].toUpperCase().includes(keyword)) ||
+                (product['MODELO'] && product['MODELO'].toUpperCase().includes(keyword)) ||
+                (product['Efecto'] && product['Efecto'].toUpperCase().includes(keyword)) ||
+                (product['COLOR'] && product['COLOR'].toUpperCase().includes(keyword));
+
             const is20mm = !document.getElementById('filtro-20mm').checked || (product['Espesor(mm)'] && product['Espesor(mm)'].startsWith('2'));
-            const isExt = !document.getElementById('filtro-ext').checked || (product['Acabado'] && product['Acabado'].toUpperCase() === 'EXT');
+            // <<-- CORRECCIÓN 1: Filtro EXT busca en la columna MODELO
+            const isExt = !document.getElementById('filtro-ext').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('EXT'));
             const isDup = !document.getElementById('filtro-dup').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('DUP'));
-            return is20mm && isExt && isDup;
+            
+            return keywordMatch && is20mm && isExt && isDup;
         });
         
         const activeSelectFilters = {};
@@ -621,22 +639,34 @@ document.addEventListener('DOMContentLoaded', function() {
             if (ui.allSelectFilters[key].value) activeSelectFilters[key] = ui.allSelectFilters[key].value;
         });
 
+        // Segunda pasada de filtros (selects) sobre los resultados ya filtrados
         if (Object.keys(activeSelectFilters).length > 0) {
             filteredProducts = filteredProducts.filter(product => {
                 return Object.keys(activeSelectFilters).every(key => product[key] === activeSelectFilters[key]);
             });
         }
         
+        // Repoblado de los selects basado en los filtros activos
         Object.keys(ui.allSelectFilters).forEach(currentKey => {
             const otherFilters = { ...activeSelectFilters };
             delete otherFilters[currentKey];
             
+            // Los productos disponibles para un select dependen de TODOS los demás filtros aplicados
             const availableProducts = csvData.filter(product => {
+                const keywordMatch = !keyword ||
+                    (product['Serie'] && product['Serie'].toUpperCase().includes(keyword)) ||
+                    (product['MODELO'] && product['MODELO'].toUpperCase().includes(keyword)) ||
+                    (product['Efecto'] && product['Efecto'].toUpperCase().includes(keyword)) ||
+                    (product['COLOR'] && product['COLOR'].toUpperCase().includes(keyword));
+
                 const quickFiltersPass = (!document.getElementById('filtro-20mm').checked || (product['Espesor(mm)'] && product['Espesor(mm)'].startsWith('2'))) &&
-                                         (!document.getElementById('filtro-ext').checked || (product['Acabado'] && product['Acabado'].toUpperCase() === 'EXT')) &&
+                                         // <<-- CORRECCIÓN 1 (repetida aquí para consistencia)
+                                         (!document.getElementById('filtro-ext').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('EXT'))) &&
                                          (!document.getElementById('filtro-dup').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('DUP')));
+
                 const otherSelectsPass = Object.keys(otherFilters).every(key => product[key] === otherFilters[key]);
-                return quickFiltersPass && otherSelectsPass;
+                
+                return keywordMatch && quickFiltersPass && otherSelectsPass;
             });
             
             repopulateSelectWithOptions(ui.allSelectFilters[currentKey], availableProducts);
@@ -645,6 +675,7 @@ document.addEventListener('DOMContentLoaded', function() {
         renderProductList(filteredProducts);
         ui.statusMessage.textContent = `${filteredProducts.length} productos encontrados`;
     }
+
     
     function repopulateSelectWithOptions(selectElement, availableProducts) {
         const currentValue = selectElement.value;
@@ -694,6 +725,19 @@ document.addEventListener('DOMContentLoaded', function() {
             const typeTag = product['Desc_Familia_web'] ? `<span class="tag">${product['Desc_Familia_web'].split(' ')[0]}</span>` : '';
             const classTag = product['en_16165_anexo_c_deslizamiento_pendulo'] ? `<span class="tag">C${product['en_16165_anexo_c_deslizamiento_pendulo']}</span>` : '';
             
+            // <<-- CORRECCIÓN 2: Lógica para la etiqueta de espesor en cm y mm
+            let espesorTag = '';
+            const espesorValue = product['Espesor(mm)'];
+            if (espesorValue) {
+                const espesorCm = parseFloat(espesorValue.replace(',', '.'));
+                if (!isNaN(espesorCm)) {
+                    const espesorMm = espesorCm * 10;
+                    const cmString = espesorCm.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+                    const mmString = espesorMm.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+                    espesorTag = `<span class="tag">${cmString} cm / ${mmString} mm</span>`;
+                }
+            }
+
             card.innerHTML = `
                 <div class="card-thumb-container">${imgHTML}</div>
                 <div class="card-info">
@@ -702,7 +746,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="card-tags">
                         ${typeTag}
                         ${classTag}
-                        ${product['Espesor(mm)'] ? `<span class="tag">${product['Espesor(mm)']}mm</span>` : ''}
+                        ${espesorTag}
                     </div>
                 </div>
             `;
@@ -713,6 +757,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function clearFilters() {
+         ui.searchKeyword.value = ''; // <<-- NUEVO
          ui.quickFilters.forEach(qf => qf.checked = false);
          Object.values(ui.allSelectFilters).forEach(select => select.value = '');
          updateFiltersAndProductList();
@@ -879,6 +924,7 @@ document.addEventListener('DOMContentLoaded', function() {
     ui.btnBackSearch.addEventListener('click', goToSearchMode);
     
     ui.btnClearFilters.addEventListener('click', clearFilters);
+    ui.searchKeyword.addEventListener('input', updateFiltersAndProductList); // <<-- NUEVO
     ui.quickFilters.forEach(el => el.addEventListener('change', updateFiltersAndProductList));
     Object.values(ui.allSelectFilters).forEach(el => el.addEventListener('change', updateFiltersAndProductList));
     
@@ -919,6 +965,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // INICIO
     loadDataAndInitializeApp();
 });
-    </script>
+</script>
 </body>
 </html>
