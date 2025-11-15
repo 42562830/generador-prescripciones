@@ -30,7 +30,7 @@
             --font-main: 'Montserrat', sans-serif;
             --radio-borde: 8px;
             --sombra-suave: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-            --max-width-container: 1800px; /* Aumentado para aprovechar pantallas grandes */
+            --max-width-container: 1800px;
         }
 
         /* --- ESTILOS BASE Y RESET --- */
@@ -141,7 +141,7 @@
             position: relative;
         }
         .view-section {
-            display: none; /* Oculto por defecto */
+            display: none;
             height: 100%;
             width: 100%;
             max-width: var(--max-width-container);
@@ -178,14 +178,27 @@
         .panel-body::-webkit-scrollbar-thumb, #product-results-list::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 20px; border: 2px solid var(--color-fondo-suave); }
         .panel-body::-webkit-scrollbar-thumb:hover { background-color: #bbb; }
         
-        /* --- HISTORIAL --- */
+        /* --- HISTORIAL (CAMBIO: ESTILOS MEJORADOS) --- */
         #history-list .history-item {
             padding: 10px;
             border-bottom: 1px solid var(--color-borde-suave);
             font-size: 0.9em;
         }
         #history-list .history-item:last-child { border-bottom: none; }
-        #history-list .history-item small { display: block; color: #888; }
+        #history-list .history-item strong {
+             display: block;
+             color: var(--color-texto-principal);
+        }
+        #history-list .history-item .details {
+            font-size: 0.9em;
+            color: #666;
+            padding: 4px 0;
+        }
+        #history-list .history-item small { 
+            display: block; 
+            color: #888; 
+            font-size: 0.85em;
+        }
 
 
         /* --- MODO 1: BUSCADOR --- */
@@ -244,9 +257,14 @@
             display: flex; align-items: center; justify-content: center; margin-bottom: 20px; overflow: hidden;
         }
         #detail-product-image { max-width: 100%; max-height: 100%; object-fit: contain; }
+        
+        /* --- CAMBIO: BLOQUEO DE SELECCIÓN DE TEXTO --- */
         #texto-generado {
             font-family: var(--font-main); font-size: 1.05em; line-height: 1.9; color: #333;
             white-space: pre-wrap; margin: 0;
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none;     /* IE 10+ */
+            user-select: none;         /* Sintaxis estándar */
         }
         .resaltado { color: var(--color-principal); font-weight: 600; }
 
@@ -440,7 +458,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     // --- ELEMENTOS DEL DOM ---
     const ui = {
-        // Elementos de Login y Sesión
         loginOverlay: document.getElementById('login-overlay'),
         loginButton: document.getElementById('login-button'),
         loginUsername: document.getElementById('login-username'),
@@ -451,13 +468,9 @@ document.addEventListener('DOMContentLoaded', function() {
         logoutLink: document.getElementById('logout-link'),
         historyPanel: document.getElementById('history-panel'),
         historyList: document.getElementById('history-list'),
-
-        // Vistas
         viewSearch: document.getElementById('view-search'),
         viewDetail: document.getElementById('view-detail'),
         btnBackSearch: document.getElementById('btn-back-search'),
-
-        // Formulario y Filtros
         formulario: document.getElementById('formulario-prescripcion'),
         statusMessage: document.getElementById('status-message'),
         btnClearFilters: document.getElementById('btn-clear-filters'),
@@ -467,16 +480,10 @@ document.addEventListener('DOMContentLoaded', function() {
             acc[select.dataset.csvCol] = select;
             return acc;
         }, {}),
-
-        // Resultados Búsqueda
         productResultsList: document.getElementById('product-results-list'),
-
-        // Detalle Producto
         detailImage: document.getElementById('detail-product-image'),
         detailImageContainer: document.getElementById('detail-image-container'),
         output: document.getElementById('texto-generado'),
-        
-        // Botones Acción Detalle
         btnCopiar: document.getElementById('btn-copiar'),
         btnDescargarTxt: document.getElementById('btn-descargar-txt'),
         btnDescargarPdf: document.getElementById('btn-descargar-pdf'),
@@ -489,7 +496,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let csvData = [];
     let selectedProductIndex = null;
     let currentUser = null;
-    // IMPORTANTE: Esta es la contraseña para la simulación. En una aplicación real, NUNCA se debe guardar una contraseña en el código del cliente.
     const MASTER_PASSWORD = 'pamesa2025';
     
     const revestimientoTypes = [
@@ -521,12 +527,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const username = ui.loginUsername.value.trim();
         const password = ui.loginPassword.value.trim();
         ui.loginError.textContent = '';
-
         if (!username || !password) {
             ui.loginError.textContent = 'Usuario y contraseña son obligatorios.';
             return;
         }
-
         if (password === MASTER_PASSWORD) {
             localStorage.setItem('currentUser', username);
             checkLogin();
@@ -542,22 +546,29 @@ document.addEventListener('DOMContentLoaded', function() {
         location.reload();
     }
     
+    // --- CAMBIO: GUARDAR HISTORIAL DETALLADO ---
     function savePrescriptionToHistory() {
         if (!currentUser || selectedProductIndex === null) return;
         const product = csvData[selectedProductIndex];
         const historyKey = `history_${currentUser}`;
         let history = JSON.parse(localStorage.getItem(historyKey)) || [];
+        
         const newEntry = {
             model: product.MODELO || 'S/M',
             color: product.COLOR || 'S/C',
+            id: product['Id.Articulo'] || 'N/A',
+            format: product.FORMATO || 'S/F',
+            finish: product.Acabado || 'S/A',
             date: new Date().toLocaleString('es-ES')
         };
+
         history.unshift(newEntry);
         if (history.length > 20) { history = history.slice(0, 20); }
         localStorage.setItem(historyKey, JSON.stringify(history));
         displayHistory();
     }
 
+    // --- CAMBIO: MOSTRAR HISTORIAL DETALLADO ---
     function displayHistory() {
         if (!currentUser) return;
         const historyKey = `history_${currentUser}`;
@@ -568,6 +579,9 @@ document.addEventListener('DOMContentLoaded', function() {
             ui.historyList.innerHTML = history.map(item => `
                 <div class="history-item">
                     <strong>${item.model} - ${item.color}</strong>
+                    <div class="details">
+                        ID: ${item.id} | ${item.format} | ${item.finish}
+                    </div>
                     <small>${item.date}</small>
                 </div>`).join('');
         }
