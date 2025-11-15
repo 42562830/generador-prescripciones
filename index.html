@@ -51,19 +51,45 @@
         }
         
         /* --- PANTALLA DE LOGIN PROFESIONAL --- */
+        @keyframes zoomInEffect {
+            0% {
+                transform: scale(1);
+            }
+            100% {
+                transform: scale(1.1);
+            }
+        }
+        
         #login-overlay {
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background-color: var(--color-fondo);
+            background-color: rgba(0, 0, 0, 0.5); /* Color de fondo semitransparente para legibilidad */
             z-index: 1000;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: opacity 0.3s ease;
+            overflow: hidden; /* Para contener el zoom de la imagen */
         }
+        
+        #login-overlay::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('image-index.jpg');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            z-index: -1; /* Coloca la imagen detrás del contenido */
+            animation: zoomInEffect 20s ease-in-out infinite alternate;
+        }
+
         #login-box {
-            background: var(--color-blanco);
+            background-color: rgba(255, 255, 255, 0.9);
             padding: 40px 50px;
             border-radius: var(--radio-borde);
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
