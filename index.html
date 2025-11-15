@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Prescripciones de Obra v3.2 - Pamesa Cerámica</title>
+    <title>Generador de Prescripciones de Obra v3.3 - Pamesa Cerámica</title>
     
     <!-- LIBRERÍAS EXTERNAS -->
     <!-- Fuente Montserrat -->
@@ -205,33 +205,36 @@
         .btn-volver:hover { color: var(--color-principal); }
         .btn-volver svg { width: 20px; height: 20px; }
 
+        /**************************************************/
+        /* ****** INICIO DE LA CORRECCIÓN DEFINITIVA ****** */
+        /**************************************************/
+
         /* Imagen Grande en Detalle */
         #detail-image-container {
             width: 100%;
+            height: 40vh; /* Se establece una altura fija al contenedor (40% de la altura de la ventana) */
             background-color: #fff;
             border: 1px solid var(--color-borde-suave);
-            border-radius: 0;
-            display: flex; align-items: center; justify-content: center;
-            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             margin-bottom: 20px;
+            overflow: hidden;
         }
         
-        /**************************************************/
-        /* ****** INICIO DE LA CORRECCIÓN APLICADA ****** */
-        /**************************************************/
-        #detail-image {
+        /* 1. SE CORRIGE EL SELECTOR: de #detail-image a #detail-product-image para que coincida con el HTML. */
+        /* 2. SE USA OBJECT-FIT: Esta es la propiedad clave para ajustar la imagen sin deformarla. */
+        #detail-product-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Asegura que toda la imagen sea visible, manteniendo la proporción */
             display: block;
-            /* Se establece un ancho y alto máximos para que la imagen se ajuste y no se corte. */
-            max-width: 100%;
-            /* Se limita la altura para que no sea excesiva en pantallas altas. */
-            max-height: 40vh;
-            /* Width y height se dejan en 'auto' (por defecto) para que el navegador mantenga las proporciones. */
-            width: auto;
-            height: auto;
         }
+        
         /************************************************/
-        /* ****** FIN DE LA CORRECCIÓN APLICADA ****** */
+        /* ****** FIN DE LA CORRECCIÓN DEFINITIVA ****** */
         /************************************************/
+
 
         /* Texto Generado en Detalle */
         #texto-generado {
