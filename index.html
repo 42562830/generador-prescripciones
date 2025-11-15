@@ -210,13 +210,16 @@
             width: 100%;
             background-color: #fff;
             border: 1px solid var(--color-borde-suave);
-            border-radius: var(--radio-borde);
+            border-radius: 0;
             display: flex; align-items: center; justify-content: center;
             overflow: hidden;
             margin-bottom: 20px;
         }
         #detail-image {
-            width: 100%; height: auto; object-fit: contain;
+            width: 100%; 
+    height: auto; /* ESTO ES CLAVE: la altura se ajusta sola para no deformar la imagen */
+    object-fit: contain;
+    display: block; /* Buena práctica para asegurar que no haya espacios extraños */
         }
 
         /* Texto Generado en Detalle */
@@ -310,7 +313,7 @@
     <header class="header-corporativo">
         <div class="header-container">
             <img src="LOGO-PAMESA.jpg" alt="Logo Pamesa Cerámica" onerror="this.style.display='none'">
-            <h1>Generador de Prescripciones de Obra v3.0</h1>
+            <h1>Generador de Prescripciones de Obra v3.1</h1>
         </div>
     </header>
 
