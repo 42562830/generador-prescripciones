@@ -215,14 +215,23 @@
             overflow: hidden;
             margin-bottom: 20px;
         }
+        
+        /**************************************************/
+        /* ****** INICIO DE LA CORRECCIÓN APLICADA ****** */
+        /**************************************************/
         #detail-image {
-    width: 100%; 
-    height: auto; 
-    object-fit: contain;
-    display: block;
-    /* AÑADE ESTA LÍNEA PARA LIMITAR LA ALTURA MÁXIMA */
-    max-height: 40vh; 
-}
+            display: block;
+            /* Se establece un ancho y alto máximos para que la imagen se ajuste y no se corte. */
+            max-width: 100%;
+            /* Se limita la altura para que no sea excesiva en pantallas altas. */
+            max-height: 40vh;
+            /* Width y height se dejan en 'auto' (por defecto) para que el navegador mantenga las proporciones. */
+            width: auto;
+            height: auto;
+        }
+        /************************************************/
+        /* ****** FIN DE LA CORRECCIÓN APLICADA ****** */
+        /************************************************/
 
         /* Texto Generado en Detalle */
         #texto-generado {
@@ -315,7 +324,7 @@
     <header class="header-corporativo">
         <div class="header-container">
             <img src="LOGO-PAMESA.jpg" alt="Logo Pamesa Cerámica" onerror="this.style.display='none'">
-            <h1>Generador de Prescripciones de Obra v3.2</h1>
+            <h1>Generador de Prescripciones de Obra v3.3</h1>
         </div>
     </header>
 
