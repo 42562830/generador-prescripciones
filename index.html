@@ -49,6 +49,61 @@
             height: 100vh;
             overflow: hidden;
         }
+        
+        /* --- PANTALLA DE LOGIN PROFESIONAL --- */
+        #login-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: var(--color-fondo);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.3s ease;
+        }
+        #login-box {
+            background: var(--color-blanco);
+            padding: 40px 50px;
+            border-radius: var(--radio-borde);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 420px;
+            border-top: 4px solid var(--color-principal);
+        }
+        #login-logo {
+            max-width: 200px;
+            margin-bottom: 25px;
+        }
+        #login-box h2 {
+            font-size: 1.5em;
+            color: var(--color-titulos);
+            font-weight: 600;
+            margin: 0 0 10px 0;
+        }
+        #login-box p {
+            color: var(--color-texto-secundario);
+            margin-bottom: 30px;
+        }
+        #login-box .campo { text-align: left; }
+        #login-box .campo input {
+            padding: 12px 15px;
+            font-size: 1em;
+        }
+        #login-button {
+            width: 100%;
+            padding: 12px;
+            font-size: 1em;
+            margin-top: 10px;
+        }
+        #login-error {
+            color: var(--color-principal);
+            font-weight: 600;
+            font-size: 0.9em;
+            height: 20px;
+            margin-top: 15px;
+        }
 
         /* --- CABECERA --- */
         .header-corporativo {
@@ -71,6 +126,12 @@
             font-size: 1.4em; color: var(--color-titulos);
             font-weight: 600; margin: 0; text-align: right;
         }
+        #logout-link {
+            color: var(--color-principal);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        #logout-link:hover { text-decoration: underline; }
         
         /* --- ESTRUCTURA DE VISTAS (MODOS) --- */
         .main-content { 
@@ -79,8 +140,6 @@
             overflow: hidden;
             position: relative;
         }
-
-        /* Clase para ocultar/mostrar vistas completas */
         .view-section {
             display: none; /* Oculto por defecto */
             height: 100%;
@@ -89,15 +148,11 @@
             margin: 0 auto;
             gap: 20px;
         }
-
-        .view-section.active-view {
-            display: flex; /* Solo se muestra la activa */
-        }
+        .view-section.active-view { display: flex; }
 
         /* --- COLUMNAS Y PANELES --- */
         .col-left { flex: 1; min-width: 350px; max-width: 450px; display: flex; flex-direction: column; }
         .col-right { flex: 2; display: flex; flex-direction: column; min-width: 0; }
-
         .panel {
             background-color: var(--color-blanco);
             border-radius: var(--radio-borde);
@@ -108,7 +163,6 @@
             overflow: hidden;
             height: 100%;
         }
-        
         .panel-header {
             padding: 20px;
             border-bottom: 1px solid var(--color-borde-suave);
@@ -118,35 +172,33 @@
             justify-content: space-between;
             align-items: center;
         }
-
-        .panel-body {
-            padding: 20px;
-            overflow-y: auto;
-            flex-grow: 1;
-        }
-
-        /* Scrollbars personalizados */
+        .panel-body { padding: 20px; overflow-y: auto; flex-grow: 1; }
         .panel-body::-webkit-scrollbar, #product-results-list::-webkit-scrollbar { width: 8px; }
         .panel-body::-webkit-scrollbar-track, #product-results-list::-webkit-scrollbar-track { background: var(--color-fondo-suave); }
         .panel-body::-webkit-scrollbar-thumb, #product-results-list::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 20px; border: 2px solid var(--color-fondo-suave); }
         .panel-body::-webkit-scrollbar-thumb:hover { background-color: #bbb; }
+        
+        /* --- HISTORIAL --- */
+        #history-list .history-item {
+            padding: 10px;
+            border-bottom: 1px solid var(--color-borde-suave);
+            font-size: 0.9em;
+        }
+        #history-list .history-item:last-child { border-bottom: none; }
+        #history-list .history-item small { display: block; color: #888; }
+
 
         /* --- MODO 1: BUSCADOR --- */
-        /* Panel Filtros */
         #formulario-busqueda { padding: 10px; }
-        
-        /* Panel Resultados (Lista) */
         #product-results-list {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); /* Grid responsivo */
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
             gap: 15px;
             padding: 20px;
             overflow-y: auto;
             height: 100%;
             background-color: var(--color-fondo-suave);
         }
-
-        /* Tarjeta de Producto v2.0 */
         .product-card {
             background: white;
             border: 1px solid var(--color-borde-suave);
@@ -163,113 +215,52 @@
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
             border-color: var(--color-principal);
         }
-        
         .card-thumb-container {
-            width: 80px;
-            height: 80px;
-            border-radius: 6px;
-            background-color: #eee;
-            flex-shrink: 0;
-            overflow: hidden;
+            width: 80px; height: 80px; border-radius: 6px;
+            background-color: #eee; flex-shrink: 0; overflow: hidden;
             display: flex; align-items: center; justify-content: center;
         }
-        .card-thumb {
-            width: 100%; height: 100%; object-fit: cover;
-        }
-        .card-no-thumb {
-            font-size: 0.7em; color: #999; text-align: center; padding: 5px;
-        }
-
+        .card-thumb { width: 100%; height: 100%; object-fit: cover; }
+        .card-no-thumb { font-size: 0.7em; color: #999; text-align: center; padding: 5px; }
         .card-info { flex-grow: 1; min-width: 0; }
         .card-title {
             font-weight: 700; font-size: 1em; color: var(--color-texto-principal);
-            margin: 0 0 5px 0;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            margin: 0 0 5px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        .card-sub {
-            font-size: 0.85em; color: var(--color-texto-secundario); margin-bottom: 8px;
-        }
+        .card-sub { font-size: 0.85em; color: var(--color-texto-secundario); margin-bottom: 8px; }
         .card-tags { display: flex; flex-wrap: wrap; gap: 5px; }
-        .tag {
-            background: #f0f0f0; color: #555; font-size: 0.7em; padding: 2px 6px; border-radius: 4px; font-weight: 600;
-        }
+        .tag { background: #f0f0f0; color: #555; font-size: 0.7em; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
 
         /* --- MODO 2: DETALLE --- */
         .btn-volver {
-            background: none; border: none; 
-            color: var(--color-texto-secundario); 
-            font-weight: 600; font-size: 0.95em; 
-            cursor: pointer; display: flex; align-items: center; gap: 8px;
+            background: none; border: none; color: var(--color-texto-secundario); 
+            font-weight: 600; font-size: 0.95em; cursor: pointer; display: flex; align-items: center; gap: 8px;
             transition: color 0.2s;
         }
         .btn-volver:hover { color: var(--color-principal); }
         .btn-volver svg { width: 20px; height: 20px; }
-
-
-        /**************************************************/
-        /* ****** INICIO DE LA CORRECCIÓN CSS ****** */
-        /**************************************************/
         #detail-image-container {
-            width: 100%;
-            /* Se establece una altura máxima para darle un espacio definido */
-            max-height: 40vh; 
-            background-color: #fff;
-            border: 1px solid var(--color-borde-suave);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-            overflow: hidden; /* Esto es importante por si acaso */
+            width: 100%; max-height: 40vh; background-color: #fff; border: 1px solid var(--color-borde-suave);
+            display: flex; align-items: center; justify-content: center; margin-bottom: 20px; overflow: hidden;
         }
-        
-        #detail-product-image {
-            /* Con estas 3 propiedades, la imagen se ajustará perfectamente */
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain; /* Esta es la clave para que se vea entera sin deformarse */
-        }
-        /************************************************/
-        /* ****** FIN DE LA CORRECCIÓN CSS ****** */
-        /************************************************/
-
-
-        /* Texto Generado en Detalle */
+        #detail-product-image { max-width: 100%; max-height: 100%; object-fit: contain; }
         #texto-generado {
-            font-family: var(--font-main);
-            font-size: 1.05em; /* Texto más grande */
-            line-height: 1.9;
-            color: #333;
-            white-space: pre-wrap;
-            margin: 0;
+            font-family: var(--font-main); font-size: 1.05em; line-height: 1.9; color: #333;
+            white-space: pre-wrap; margin: 0;
         }
-        
         .resaltado { color: var(--color-principal); font-weight: 600; }
 
         /* --- COMPONENTES COMUNES --- */
-        fieldset {
-            border: 1px solid var(--color-borde-suave);
-            border-radius: var(--radio-borde);
-            padding: 15px; margin: 0 0 20px 0;
-        }
-        legend {
-            font-weight: 600; font-size: 1em; color: var(--color-principal); padding: 0 5px;
-        }
+        fieldset { border: 1px solid var(--color-borde-suave); border-radius: var(--radio-borde); padding: 15px; margin: 0 0 20px 0; }
+        legend { font-weight: 600; font-size: 1em; color: var(--color-principal); padding: 0 5px; }
         .campo { margin-bottom: 12px; }
-        .campo label {
-            display: block; margin-bottom: 4px; font-weight: 500; font-size: 0.85em; color: #555;
-        }
+        .campo label { display: block; margin-bottom: 4px; font-weight: 500; font-size: 0.85em; color: #555; }
         .campo input, .campo select {
             width: 100%; padding: 10px; border: 1px solid var(--color-borde-suave);
             border-radius: 6px; font-family: var(--font-main); font-size: 0.95em;
         }
-        .campo input:focus, .campo select:focus {
-            outline: none; border-color: var(--color-principal);
-        }
-
-        /* Botones de Acción */
-        .acciones-container {
-            display: flex; flex-wrap: wrap; gap: 10px;
-        }
+        .campo input:focus, .campo select:focus { outline: none; border-color: var(--color-principal); }
+        .acciones-container { display: flex; flex-wrap: wrap; gap: 10px; }
         .btn-accion {
             background-color: var(--color-principal); color: white; border: none; padding: 10px 18px; border-radius: 6px;
             cursor: pointer; font-weight: 600; font-size: 0.9em; text-decoration: none;
@@ -278,8 +269,6 @@
         .btn-accion:hover { background-color: var(--color-principal-hover); transform: translateY(-1px); }
         .btn-accion.secundario { background-color: var(--color-secundario); }
         .btn-accion.secundario:hover { background-color: var(--color-secundario-hover); }
-
-        /* Filtros Rápidos */
         .filtros-rapidos { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
         .filtro-toggle-label {
             padding: 6px 12px; border: 1px solid var(--color-borde-suave); border-radius: 20px;
@@ -288,31 +277,23 @@
         .filtro-toggle-input:checked + .filtro-toggle-label {
             background-color: var(--color-principal); color: white; border-color: var(--color-principal);
         }
-
-        #status-message {
-            text-align: center; font-weight: 600; margin-top: 10px; font-size: 0.9em; color: #666;
-        }
+        #status-message { text-align: center; font-weight: 600; margin-top: 10px; font-size: 0.9em; color: #666; }
         .btn-limpiar {
             background: none; border: 1px solid var(--color-principal); color: var(--color-principal);
             border-radius: 4px; padding: 4px 10px; font-size: 0.8em; cursor: pointer;
         }
-
-        /* Mensaje vacío */
         .empty-search-state {
-            grid-column: 1 / -1;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center;
             height: 100%; color: #999; text-align: center;
         }
         .empty-search-state svg { width: 60px; height: 60px; margin-bottom: 15px; opacity: 0.3; }
-
-        /* Oculto helper */
         .oculto { display: none !important; }
 
         /* Responsive */
         @media (max-width: 900px) {
             .container { flex-direction: column; }
             .col-left, .col-right { width: 100%; max-width: none; flex: none; }
-            .view-section { flex-direction: column; overflow-y: auto; display: none; } /* Reset display none */
+            .view-section { flex-direction: column; overflow-y: auto; display: none; }
             .view-section.active-view { display: block; }
             .panel { height: auto; margin-bottom: 20px; overflow: visible; }
             #product-results-list { height: 400px; overflow-y: auto; }
@@ -321,22 +302,49 @@
 </head>
 <body>
 
+    <!-- ================================================== -->
+    <!-- PANTALLA DE LOGIN (SOBREPUESTA) -->
+    <!-- ================================================== -->
+    <div id="login-overlay">
+        <div id="login-box">
+            <img src="LOGO-PAMESA.jpg" alt="Logo Pamesa Cerámica" id="login-logo">
+            <h2>Acceso al Generador</h2>
+            <p>Introduce tus credenciales para continuar.</p>
+            <div class="campo">
+                <label for="login-username">Nombre de Usuario</label>
+                <input type="text" id="login-username" placeholder="Tu nombre o identificador">
+            </div>
+            <div class="campo">
+                <label for="login-password">Contraseña</label>
+                <input type="password" id="login-password" placeholder="••••••••••">
+            </div>
+            <div id="login-error"></div>
+            <button id="login-button" class="btn-accion">Entrar</button>
+        </div>
+    </div>
+
+
     <header class="header-corporativo">
         <div class="header-container">
             <img src="LOGO-PAMESA.jpg" alt="Logo Pamesa Cerámica" onerror="this.style.display='none'">
-            <h1>Generador de Prescripciones de Obra v3.4</h1>
+            <div style="text-align: right;">
+                <h1 style="margin-bottom: 5px;">Generador de Prescripciones de Obra v3.4</h1>
+                <div id="user-info" class="oculto" style="font-size: 0.9em;">
+                    <span id="user-greeting"></span> | <a href="#" id="logout-link">Salir</a>
+                </div>
+            </div>
         </div>
     </header>
 
     <main class="main-content">
         
         <!-- ========================================= -->
-        <!-- MODO 1: BÚSQUEDA (Vista por defecto) -->
+        <!-- MODO 1: BÚSQUEDA (Vista por defecto)      -->
         <!-- ========================================= -->
         <div id="view-search" class="view-section active-view">
             
-            <!-- Columna Izquierda: FILTROS -->
             <div class="col-left">
+                <!-- Panel de Filtros -->
                 <div class="panel">
                     <div class="panel-header">
                         <h3 style="margin:0; font-size:1.1em;">Filtros de Búsqueda</h3>
@@ -344,36 +352,27 @@
                     </div>
                     <div class="panel-body">
                         <div id="formulario-busqueda">
-                            
-                            <!-- Búsqueda por palabra clave -->
-                            <div class="campo">
-                                <label for="search-keyword">Búsqueda por palabra</label>
-                                <input type="text" id="search-keyword" placeholder="Buscar en Serie, Modelo, Efecto...">
-                            </div>
-
-                            <!-- Filtros Rápidos -->
-                            <div class="campo">
-                                <label>Características</label>
-                                <div class="filtros-rapidos">
-                                    <div><input type="checkbox" id="filtro-20mm" class="filtro-toggle-input"><label for="filtro-20mm" class="filtro-toggle-label">20mm</label></div>
-                                    <div><input type="checkbox" id="filtro-ext" class="filtro-toggle-input"><label for="filtro-ext" class="filtro-toggle-label">Acabado EXT</label></div>
-                                    <div><input type="checkbox" id="filtro-dup" class="filtro-toggle-input"><label for="filtro-dup" class="filtro-toggle-label">Modelo DUP</label></div>
-                                </div>
-                            </div>
-
-                            <!-- Filtros Principales -->
+                            <div class="campo"><label for="search-keyword">Búsqueda por palabra</label><input type="text" id="search-keyword" placeholder="Buscar en Serie, Modelo, Efecto..."></div>
+                            <div class="campo"><label>Características</label><div class="filtros-rapidos"><div><input type="checkbox" id="filtro-20mm" class="filtro-toggle-input"><label for="filtro-20mm" class="filtro-toggle-label">20mm</label></div><div><input type="checkbox" id="filtro-ext" class="filtro-toggle-input"><label for="filtro-ext" class="filtro-toggle-label">Acabado EXT</label></div><div><input type="checkbox" id="filtro-dup" class="filtro-toggle-input"><label for="filtro-dup" class="filtro-toggle-label">Modelo DUP</label></div></div></div>
                             <div class="campo"><label>Serie</label><select id="search-serie" data-csv-col="Serie" disabled><option value="">Todas</option></select></div>
                             <div class="campo"><label>Efecto</label><select id="search-efecto" data-csv-col="Efecto" disabled><option value="">Todos</option></select></div>
                             <div class="campo"><label>Color</label><select id="search-color" data-csv-col="COLOR" disabled><option value="">Todos</option></select></div>
-                            
-                            <!-- Filtros Secundarios -->
                             <div class="campo"><label>Formato</label><select id="search-formato" data-csv-col="FORMATO" disabled><option value="">Todos</option></select></div>
                             <div class="campo"><label>Modelo</label><select id="search-modelo" data-csv-col="MODELO" disabled><option value="">Todos</option></select></div>
                             <div class="campo"><label>Tipo Material</label><select id="search-familia" data-csv-col="Desc_Familia_web" disabled><option value="">Todos</option></select></div>
                             <div class="campo"><label>Clase Resbaladicidad</label><select id="search-resbaladicidad" data-csv-col="en_16165_anexo_c_deslizamiento_pendulo" disabled><option value="">Todas</option></select></div>
-
                             <div id="status-message">Cargando datos...</div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Panel de Historial -->
+                <div class="panel oculto" id="history-panel" style="margin-top:20px; max-height: 250px; flex-shrink:0;">
+                    <div class="panel-header">
+                        <h3 style="margin:0; font-size:1.1em;">Historial de Prescripciones</h3>
+                    </div>
+                    <div class="panel-body" id="history-list">
+                        <p style="color: #999; text-align:center;">No has generado ninguna prescripción todavía.</p>
                     </div>
                 </div>
             </div>
@@ -381,16 +380,9 @@
             <!-- Columna Derecha: RESULTADOS (Galería) -->
             <div class="col-right">
                 <div class="panel">
-                    <div class="panel-header">
-                        <h3 style="margin:0; font-size:1.1em;">Resultados Disponibles</h3>
-                        <!-- Aquí podrías poner un contador o ordenación si quisieras -->
-                    </div>
-                    <!-- Contenedor de la lista de tarjetas -->
+                    <div class="panel-header"><h3 style="margin:0; font-size:1.1em;">Resultados Disponibles</h3></div>
                     <div id="product-results-list">
-                        <!-- JS inyectará las tarjetas aquí -->
-                        <div class="empty-search-state">
-                            <p>Cargando productos...</p>
-                        </div>
+                        <div class="empty-search-state"><p>Inicia sesión para cargar los productos...</p></div>
                     </div>
                 </div>
             </div>
@@ -398,11 +390,10 @@
 
 
         <!-- ========================================= -->
-        <!-- MODO 2: DETALLE (Prescripción) -->
+        <!-- MODO 2: DETALLE (Prescripción)          -->
         <!-- ========================================= -->
         <div id="view-detail" class="view-section">
             
-            <!-- Columna Izquierda: CONTROL Y EDICIÓN -->
             <div class="col-left">
                 <div class="panel">
                     <div class="panel-header">
@@ -412,60 +403,31 @@
                         </button>
                     </div>
                     <div class="panel-body">
-                        
-                        <!-- Imagen del Producto -->
-                        <div id="detail-image-container">
-                            <img id="detail-product-image" src="" alt="Producto">
-                        </div>
-
-                        <!-- Formulario Editable -->
+                        <div id="detail-image-container"><img id="detail-product-image" src="" alt="Producto"></div>
                         <form id="formulario-prescripcion">
-                            <fieldset>
-                                <legend>Materiales de Colocación</legend>
-                                <div class="campo"><label>Nombre Adhesivo</label><input type="text" id="adhesivo_nombre" value="MARCA ADHESIVO"></div>
-                                <div class="campo"><label>Fabricante Adhesivo</label><input type="text" id="adhesivo_fabricante" value="NOMBRE FABRICANTE"></div>
-                                <div class="campo"><label>Tipo Adhesivo (EN 12004)</label><input type="text" id="adhesivo_tipo" value=""></div>
-                                <div class="campo"><label>Nombre Mortero Juntas</label><input type="text" id="mortero_nombre" value="MARCA MORTERO"></div>
-                                <div class="campo"><label>Fabricante Mortero</label><input type="text" id="mortero_fabricante" value="NOMBRE FABRICANTE"></div>
-                            </fieldset>
-
-                            <fieldset>
-                                <legend>Detalles Ejecución</legend>
-                                <div class="campo"><label>Ancho junta (mm)</label><input type="number" id="junta_maxima" value="15"></div>
-                                <div class="campo"><label>Ancho perimetral (mm)</label><input type="number" id="junta_perimetral" value="5"></div>
-                            </fieldset>
-
-                            <!-- Campos Ocultos (Datos Fijos del CSV) -->
+                            <fieldset><legend>Materiales de Colocación</legend><div class="campo"><label>Nombre Adhesivo</label><input type="text" id="adhesivo_nombre" value="MARCA ADHESIVO"></div><div class="campo"><label>Fabricante Adhesivo</label><input type="text" id="adhesivo_fabricante" value="NOMBRE FABRICANTE"></div><div class="campo"><label>Tipo Adhesivo (EN 12004)</label><input type="text" id="adhesivo_tipo" value=""></div><div class="campo"><label>Nombre Mortero Juntas</label><input type="text" id="mortero_nombre" value="MARCA MORTERO"></div><div class="campo"><label>Fabricante Mortero</label><input type="text" id="mortero_fabricante" value="NOMBRE FABRICANTE"></div></fieldset>
+                            <fieldset><legend>Detalles Ejecución</legend><div class="campo"><label>Ancho junta (mm)</label><input type="number" id="junta_maxima" value="15"></div><div class="campo"><label>Ancho perimetral (mm)</label><input type="number" id="junta_perimetral" value="5"></div></fieldset>
                             <input type="hidden" id="tipo_material"><input type="hidden" id="fabricante" value="PAMESA CERÁMICA"><input type="hidden" id="coleccion"><input type="hidden" id="color"><input type="hidden" id="aspecto"><input type="hidden" id="dim_ancho"><input type="hidden" id="dim_alto"><input type="hidden" id="dim_espesor"><input type="hidden" id="desviacion" value="0,15%"><input type="hidden" id="norma_dimensiones" value="UNE-EN ISO10545-2, ISO 13006:2018 UNE-EN 14411:2016"><input type="hidden" id="destonificado"><input type="hidden" id="absorcion_agua"><input type="hidden" id="clase_resbaladicidad"><input type="hidden" id="valor_rd"><input type="hidden" id="uso_transito" value="tránsito intenso"><input type="hidden" id="resistencia_manchas"><input type="hidden" id="resistencia_quimica"><input type="hidden" id="modulo_rotura"><input type="hidden" id="carga_rotura">
                         </form>
-                        
-                        <!-- Botón Descargar Imagen -->
                         <button id="btn-descargar-imagen" class="btn-accion secundario" style="width:100%; margin-top:10px;">Descargar Imagen JPG</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Columna Derecha: PRESCRIPCIÓN FINAL -->
             <div class="col-right">
                 <div class="panel">
                     <div class="panel-header">
                         <h3 style="margin:0; font-size:1.1em;">Prescripción Técnica</h3>
                         <div class="acciones-container">
-                            <button id="btn-copiar" class="btn-accion">Copiar</button>
-                            <button id="btn-descargar-txt" class="btn-accion">TXT</button>
-                            <button id="btn-descargar-pdf" class="btn-accion">PDF</button>
-                            <a id="link-dap" href="#" target="_blank" class="btn-accion secundario">DAP</a>
-                            <a id="link-dop" href="#" target="_blank" class="btn-accion secundario">DoP</a>
+                            <button id="btn-copiar" class="btn-accion">Copiar</button><button id="btn-descargar-txt" class="btn-accion">TXT</button><button id="btn-descargar-pdf" class="btn-accion">PDF</button>
+                            <a id="link-dap" href="#" target="_blank" class="btn-accion secundario">DAP</a><a id="link-dop" href="#" target="_blank" class="btn-accion secundario">DoP</a>
                         </div>
                     </div>
                     <div class="panel-body">
-                        <!-- Enlaces adicionales -->
                         <div style="margin-bottom: 20px; display:flex; gap:10px; flex-wrap:wrap;">
                             <a href="https://www.pamesa.com/ERP/4.0/empresas/151/045/ficheros/t00030006/44/RECOMENDACIONES_PARA_LA_INSTALACION_DE_PRODUCTOS_CERAMICOS__PGEv3.pdf" target="_blank" class="btn-accion secundario" style="font-size:0.8em; padding: 5px 10px;">Guía Instalación</a>
                             <a href="https://www.pamesa.com/ERP/4.0/empresas/151/045/ficheros/t00030006/99/Pamesa_I_ES-Baldosa_2024.pdf" target="_blank" class="btn-accion secundario" style="font-size:0.8em; padding: 5px 10px;">Seguridad</a>
                         </div>
-
-                        <!-- El texto generado ocupa todo el espacio aquí -->
                         <pre id="texto-generado"></pre>
                     </div>
                 </div>
@@ -478,6 +440,18 @@
 document.addEventListener('DOMContentLoaded', function() {
     // --- ELEMENTOS DEL DOM ---
     const ui = {
+        // Elementos de Login y Sesión
+        loginOverlay: document.getElementById('login-overlay'),
+        loginButton: document.getElementById('login-button'),
+        loginUsername: document.getElementById('login-username'),
+        loginPassword: document.getElementById('login-password'),
+        loginError: document.getElementById('login-error'),
+        userInfo: document.getElementById('user-info'),
+        userGreeting: document.getElementById('user-greeting'),
+        logoutLink: document.getElementById('logout-link'),
+        historyPanel: document.getElementById('history-panel'),
+        historyList: document.getElementById('history-list'),
+
         // Vistas
         viewSearch: document.getElementById('view-search'),
         viewDetail: document.getElementById('view-detail'),
@@ -487,7 +461,7 @@ document.addEventListener('DOMContentLoaded', function() {
         formulario: document.getElementById('formulario-prescripcion'),
         statusMessage: document.getElementById('status-message'),
         btnClearFilters: document.getElementById('btn-clear-filters'),
-        searchKeyword: document.getElementById('search-keyword'), // <<-- NUEVO
+        searchKeyword: document.getElementById('search-keyword'),
         quickFilters: Array.from(document.querySelectorAll('.filtro-toggle-input')),
         allSelectFilters: Array.from(document.querySelectorAll('select[data-csv-col]')).reduce((acc, select) => {
             acc[select.dataset.csvCol] = select;
@@ -514,16 +488,90 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- ESTADO DE LA APLICACIÓN ---
     let csvData = [];
     let selectedProductIndex = null;
+    let currentUser = null;
+    // IMPORTANTE: Esta es la contraseña para la simulación. En una aplicación real, NUNCA se debe guardar una contraseña en el código del cliente.
+    const MASTER_PASSWORD = 'pamesa2025';
+    
     const revestimientoTypes = [
         'Revestimiento pasta blanca no rectificada',
         'Revestimiento pasta roja no rectificado',
         'Revestimiento pasta blanca rectificada'
     ];
     
-    // Plantillas (Iguales que antes)
     const pavimentoTemplate = `Suministro y ejecución de pavimento con <span class="resaltado">{tipo_material}</span>, de aspecto <span class="resaltado">{aspecto}</span>, colección <span class="resaltado">{coleccion}</span>, color <span class="resaltado">{color}</span> de <span class="resaltado">{fabricante}</span>. Conformado por prensado en seco, tratado en monococción a temperatura de 1200ºC.\n\nCerámica con dimensiones nominales de (Ancho x Alto x Espesor) <span class="resaltado">{dim_ancho}</span>x<span class="resaltado">{dim_alto}</span>x<span class="resaltado">{dim_espesor}</span> cm, desviación de longitud/anchura, rectitud de lados, ortogonalidad y planimetría inferior a <span class="resaltado">{desviacion}</span> (<span class="resaltado">{norma_dimensiones}</span>).\n\nDestonificado <span class="resaltado">{destonificado}</span>, con una absorción de agua muy baja <span class="resaltado">{absorcion_agua}</span> según ISO 10545-3. Clasificación de suelos según su resbaladicidad <span class="resaltado">{clase_resbaladicidad}</span> (CTE DBSUA), resistencia al deslizamiento <span class="resaltado">{valor_rd}</span> (UNE 41901:2017 EX). Módulo de rotura <span class="resaltado">{modulo_rotura}</span> (ISO-13006:2018 UNE-EN 14411:2016) y carga de rotura <span class="resaltado">{carga_rotura}</span> según ISO10545-4.\n\nPavimento de <span class="resaltado">{uso_transito}</span> conforme a la clasificación de baldosas según uso de la Guía de la Baldosa Cerámica (Documento reconocido DRB 01/11), resistente al choque térmico, al cuarteo, a la helada, a las manchas <span class="resaltado">{resistencia_manchas}</span>, según ISO 10545-14 y a los ataques químicos: <span class="resaltado">{resistencia_quimica}</span>, según ISO 10545-13.\n\nContribuye a los estándares de construcción sostenible y saludable (LEED, BREEAM, WELL) gracias a disponer de Declaración Ambiental de Producto propia (DAP), no ser una fuente emisora de sustancias peligrosas COV’s ni formaldehidos, así como por disponer de contenido de material reciclado >6%. Disponible marcado CE.\n\nCerámica recibida sobre recrecido cementoso sin calefacción radiante (no incluido), apto para la colocación en capa fina y tránsito previsto, con adhesivo de altas prestaciones con excelente adherencia y deformabilidad, <span class="resaltado">{adhesivo_nombre}</span> de <span class="resaltado">{adhesivo_fabricante}</span>, tipo <span class="resaltado">{adhesivo_tipo}</span>, según EN 12004, prescrito de acuerdo a las indicaciones de la UNE 138002 y rejuntadas con mortero de juntas cementoso de fraguado y endurecimiento rápido, <span class="resaltado">{mortero_nombre}</span> de <span class="resaltado">{mortero_fabricante}</span>, según EN 13888, para juntas de hasta <span class="resaltado">{junta_maxima}</span>mm.\n\nI/p.p medios auxiliares. Utilización de p/p de Crucetas Autonivelantes (no incluidas), formación de juntas perimetrales continuas, de anchura no menor de <span class="resaltado">{junta_perimetral}</span> mm, en los límites con paredes, pilares exentos y elevaciones de nivel y, en su caso, juntas de partición intermedias. Respetar juntas estructurales existentes en el soporte. Incluso limpieza y comprobación del grado de humedad de la base. Replanteo de niveles. Replanteo de la disposición de las baldosas y juntas de movimiento. Aplicación del adhesivo. Colocación de las crucetas. Colocación de las baldosas con llana dentada y doble encolado. Relleno, si procede, de las juntas de partición intermedias. Rejuntado. Eliminación y limpieza del material sobrante. Limpieza inicial del pavimento al finalizar la obra y protección hasta entrega de obra. Todo el proceso de colocación se efectuará según indicaciones de la dirección facultativa y norma UNE 138002.`;
-    
     const revestimientoTemplate = `Suministro y ejecución de revestimiento con <span class="resaltado">{tipo_material}</span>, de aspecto <span class="resaltado">{aspecto}</span>, colección <span class="resaltado">{coleccion}</span>, color <span class="resaltado">{color}</span> de <span class="resaltado">{fabricante}</span>.\n\nCerámica con dimensiones nominales (Ancho x Largo x Espesor) <span class="resaltado">{dim_ancho}</span>x<span class="resaltado">{dim_alto}</span>x<span class="resaltado">{dim_espesor}</span> cm, desviación de longitud/anchura, rectitud de lados, ortogonalidad y planimetría inferior a <span class="resaltado">{desviacion}</span> (<span class="resaltado">{norma_dimensiones}</span>).\n\nDestonificado <span class="resaltado">{destonificado}</span> con una absorción de agua <span class="resaltado">{absorcion_agua}</span>, módulo de rotura <span class="resaltado">{modulo_rotura}</span> y fuerza de rotura <span class="resaltado">{carga_rotura}</span> (ISO-13006:2018 UNE-EN 14411:2016).\n\nContribuye a los estándares de construcción sostenible y saludable (LEED, BREEAM, WELL) gracias a disponer de Declaración Ambiental de Producto propia (DAP), no ser una fuente emisora de sustancias peligrosas COVs ni formaldehidos, así como por disponer de contenido de material reciclado >6%.\n\nColocación en capa fina, con adhesivo cementoso tecnológico avanzado, <span class="resaltado">{adhesivo_nombre}</span> de <span class="resaltado">{adhesivo_fabricante}</span>, tipo <span class="resaltado">{adhesivo_tipo}</span> según EN 12004, prescrito de acuerdo a las indicaciones de la UNE 138002 y rejuntadas con mortero de juntas cementoso de fraguado y endurecimiento rápido, <span class="resaltado">{mortero_nombre}</span> de <span class="resaltado">{mortero_fabricante}</span>, según EN 13888, para juntas de hasta <span class="resaltado">{junta_maxima}</span> mm.\n\nI/p.p medios auxiliares. Utilización de p/p de Crucetas Autonivelantes (no incluidas), formación de juntas perimetrales continuas, de anchura no menor de <span class="resaltado">{junta_perimetral}</span> mm, en los límites con paredes, pilares exentos y elevaciones de nivel y, en su caso, juntas de partición intermedias. Respetar juntas estructurales existentes en el soporte. Limpieza y comprobación del grado de humedad de la base. Replanteo de niveles. Replanteo de la disposición de las baldosas y juntas de movimiento. Aplicación del adhesivo. Colocación de las crucetas. Colocación de las baldosas con llana dentada y doble encolado. Relleno, si procede, de las juntas de partición intermedias. Rejuntado. Eliminación y limpieza del material sobrante. Limpieza inicial del pavimento al finalizar la obra y protección hasta entrega de obra. Todo el proceso de colocación se efectuará según indicaciones de la dirección facultativa y norma UNE 138002.`;
+
+    // --- LÓGICA DE SIMULACIÓN DE LOGIN, SESIÓN E HISTORIAL ---
+    function checkLogin() {
+        const username = localStorage.getItem('currentUser');
+        if (username) {
+            currentUser = username;
+            ui.userGreeting.textContent = `Hola, ${currentUser}`;
+            ui.userInfo.classList.remove('oculto');
+            ui.loginOverlay.classList.add('oculto');
+            ui.historyPanel.classList.remove('oculto');
+            loadDataAndInitializeApp();
+            displayHistory();
+        } else {
+            ui.loginOverlay.classList.remove('oculto');
+        }
+    }
+
+    function handleLogin() {
+        const username = ui.loginUsername.value.trim();
+        const password = ui.loginPassword.value.trim();
+        ui.loginError.textContent = '';
+
+        if (!username || !password) {
+            ui.loginError.textContent = 'Usuario y contraseña son obligatorios.';
+            return;
+        }
+
+        if (password === MASTER_PASSWORD) {
+            localStorage.setItem('currentUser', username);
+            checkLogin();
+        } else {
+            ui.loginError.textContent = 'Contraseña incorrecta.';
+            ui.loginPassword.value = '';
+        }
+    }
+
+    function handleLogout() {
+        localStorage.removeItem('currentUser');
+        currentUser = null;
+        location.reload();
+    }
+    
+    function savePrescriptionToHistory() {
+        if (!currentUser || selectedProductIndex === null) return;
+        const product = csvData[selectedProductIndex];
+        const historyKey = `history_${currentUser}`;
+        let history = JSON.parse(localStorage.getItem(historyKey)) || [];
+        const newEntry = {
+            model: product.MODELO || 'S/M',
+            color: product.COLOR || 'S/C',
+            date: new Date().toLocaleString('es-ES')
+        };
+        history.unshift(newEntry);
+        if (history.length > 20) { history = history.slice(0, 20); }
+        localStorage.setItem(historyKey, JSON.stringify(history));
+        displayHistory();
+    }
+
+    function displayHistory() {
+        if (!currentUser) return;
+        const historyKey = `history_${currentUser}`;
+        const history = JSON.parse(localStorage.getItem(historyKey)) || [];
+        if (history.length === 0) {
+            ui.historyList.innerHTML = `<p style="color: #999; text-align:center;">Aún no has generado prescripciones.</p>`;
+        } else {
+            ui.historyList.innerHTML = history.map(item => `
+                <div class="history-item">
+                    <strong>${item.model} - ${item.color}</strong>
+                    <small>${item.date}</small>
+                </div>`).join('');
+        }
+    }
 
     // --- NAVEGACIÓN (SWITCH DE VISTAS) ---
     function goToSearchMode() {
@@ -534,7 +582,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function goToDetailMode(productIndex) {
         selectedProductIndex = productIndex;
         const product = csvData[productIndex];
-        
         if (product) {
             populateDetailView(product);
             ui.viewSearch.classList.remove('active-view');
@@ -544,7 +591,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- RENDERIZADO DETALLE ---
     function populateDetailView(product) {
-        // 1. Rellenar campos ocultos y visibles
         const productType = product['Desc_Familia_web'] || '';
         document.getElementById('tipo_material').value = productType;
         document.getElementById('coleccion').value = product['MODELO'] || '';
@@ -561,41 +607,24 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('resistencia_quimica').value = product['Resistencia_a_ataques_químicos'] || '';
         document.getElementById('modulo_rotura').value = product['iso_10545_4_resistencia_flexion'] || '';
         document.getElementById('carga_rotura').value = product['iso_10545_4_fuerza_rotura'] || '';
-        
         document.getElementById('adhesivo_tipo').value = product['Adhesivo'] || 'C2';
         document.getElementById('junta_maxima').value = revestimientoTypes.includes(productType) ? "4" : "15";
 
-        // 2. Imagen Principal
         const imageUrl = product['imagen_url_web'];
-
-        /**************************************************/
-        /* ****** INICIO DE LA CORRECCIÓN JAVASCRIPT ****** */
-        /**************************************************/
-        // La visibilidad de la imagen y su contenedor se gestiona ahora
-        // con clases y CSS, no con estilos inline que anulan todo.
         if (imageUrl && imageUrl.trim() !== "") {
             ui.detailImage.src = imageUrl;
-            // Se muestra el contenedor y el botón de descarga
             ui.detailImageContainer.style.display = 'flex';
             ui.btnDescargarImagen.style.display = 'inline-flex';
         } else {
             ui.detailImage.src = ''; 
-            // Se oculta el contenedor y el botón de descarga
             ui.detailImageContainer.style.display = 'none';
             ui.btnDescargarImagen.style.display = 'none';
         }
-        /************************************************/
-        /* ****** FIN DE LA CORRECCIÓN JAVASCRIPT ****** */
-        /************************************************/
 
-
-        // 3. Links
         ui.linkDAP.href = product['declaracion_ambiental_producto'] || '#';
         ui.linkDOP.href = product['declaracion_prestaciones'] || '#';
         if (!product['declaracion_ambiental_producto']) ui.linkDAP.style.display = 'none'; else ui.linkDAP.style.display = 'inline-flex';
         if (!product['declaracion_prestaciones']) ui.linkDOP.style.display = 'none'; else ui.linkDOP.style.display = 'inline-flex';
-
-        // 4. Generar Texto
         generarTexto();
     }
 
@@ -603,10 +632,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (selectedProductIndex === null) return;
         const values = {};
         for (let el of ui.formulario.elements) { if (el.id) values[el.id] = el.value; }
-        
         const selectedProductType = values['tipo_material'];
         let activeTemplate = revestimientoTypes.includes(selectedProductType) ? revestimientoTemplate : pavimentoTemplate;
-        
         let textoHTML = activeTemplate;
         for (const key in values) {
             textoHTML = textoHTML.replace(new RegExp(`{${key}}`, 'g'), values[key] || '[DATO NO ESPECIFICADO]');
@@ -617,66 +644,33 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- LÓGICA DE FILTROS (MODO BÚSQUEDA) ---
     function updateFiltersAndProductList() {
         const keyword = ui.searchKeyword.value.trim().toUpperCase();
-
-        // Primera pasada de filtros (rápidos y por palabra)
         let filteredProducts = csvData.filter(product => {
-            const keywordMatch = !keyword ||
-                (product['Serie'] && product['Serie'].toUpperCase().includes(keyword)) ||
-                (product['MODELO'] && product['MODELO'].toUpperCase().includes(keyword)) ||
-                (product['Efecto'] && product['Efecto'].toUpperCase().includes(keyword)) ||
-                (product['COLOR'] && product['COLOR'].toUpperCase().includes(keyword));
-
+            const keywordMatch = !keyword || (product['Serie'] && product['Serie'].toUpperCase().includes(keyword)) || (product['MODELO'] && product['MODELO'].toUpperCase().includes(keyword)) || (product['Efecto'] && product['Efecto'].toUpperCase().includes(keyword)) || (product['COLOR'] && product['COLOR'].toUpperCase().includes(keyword));
             const is20mm = !document.getElementById('filtro-20mm').checked || (product['Espesor(mm)'] && product['Espesor(mm)'].startsWith('2'));
-            // <<-- CORRECCIÓN 1: Filtro EXT busca en la columna MODELO
             const isExt = !document.getElementById('filtro-ext').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('EXT'));
             const isDup = !document.getElementById('filtro-dup').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('DUP'));
-            
             return keywordMatch && is20mm && isExt && isDup;
         });
-        
         const activeSelectFilters = {};
-        Object.keys(ui.allSelectFilters).forEach(key => {
-            if (ui.allSelectFilters[key].value) activeSelectFilters[key] = ui.allSelectFilters[key].value;
-        });
-
-        // Segunda pasada de filtros (selects) sobre los resultados ya filtrados
+        Object.keys(ui.allSelectFilters).forEach(key => { if (ui.allSelectFilters[key].value) activeSelectFilters[key] = ui.allSelectFilters[key].value; });
         if (Object.keys(activeSelectFilters).length > 0) {
-            filteredProducts = filteredProducts.filter(product => {
-                return Object.keys(activeSelectFilters).every(key => product[key] === activeSelectFilters[key]);
-            });
+            filteredProducts = filteredProducts.filter(product => Object.keys(activeSelectFilters).every(key => product[key] === activeSelectFilters[key]));
         }
-        
-        // Repoblado de los selects basado en los filtros activos
         Object.keys(ui.allSelectFilters).forEach(currentKey => {
             const otherFilters = { ...activeSelectFilters };
             delete otherFilters[currentKey];
-            
-            // Los productos disponibles para un select dependen de TODOS los demás filtros aplicados
             const availableProducts = csvData.filter(product => {
-                const keywordMatch = !keyword ||
-                    (product['Serie'] && product['Serie'].toUpperCase().includes(keyword)) ||
-                    (product['MODELO'] && product['MODELO'].toUpperCase().includes(keyword)) ||
-                    (product['Efecto'] && product['Efecto'].toUpperCase().includes(keyword)) ||
-                    (product['COLOR'] && product['COLOR'].toUpperCase().includes(keyword));
-
-                const quickFiltersPass = (!document.getElementById('filtro-20mm').checked || (product['Espesor(mm)'] && product['Espesor(mm)'].startsWith('2'))) &&
-                                         // <<-- CORRECCIÓN 1 (repetida aquí para consistencia)
-                                         (!document.getElementById('filtro-ext').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('EXT'))) &&
-                                         (!document.getElementById('filtro-dup').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('DUP')));
-
+                const keywordMatch = !keyword || (product['Serie'] && product['Serie'].toUpperCase().includes(keyword)) || (product['MODELO'] && product['MODELO'].toUpperCase().includes(keyword)) || (product['Efecto'] && product['Efecto'].toUpperCase().includes(keyword)) || (product['COLOR'] && product['COLOR'].toUpperCase().includes(keyword));
+                const quickFiltersPass = (!document.getElementById('filtro-20mm').checked || (product['Espesor(mm)'] && product['Espesor(mm)'].startsWith('2'))) && (!document.getElementById('filtro-ext').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('EXT'))) && (!document.getElementById('filtro-dup').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('DUP')));
                 const otherSelectsPass = Object.keys(otherFilters).every(key => product[key] === otherFilters[key]);
-                
                 return keywordMatch && quickFiltersPass && otherSelectsPass;
             });
-            
             repopulateSelectWithOptions(ui.allSelectFilters[currentKey], availableProducts);
         });
-
         renderProductList(filteredProducts);
         ui.statusMessage.textContent = `${filteredProducts.length} productos encontrados`;
     }
 
-    
     function repopulateSelectWithOptions(selectElement, availableProducts) {
         const currentValue = selectElement.value;
         const csvCol = selectElement.dataset.csvCol;
@@ -685,7 +679,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (value) acc[value] = (acc[value] || 0) + 1;
             return acc;
         }, {});
-        
         const sortedOptions = Object.keys(counts).sort();
         selectElement.innerHTML = `<option value="">Todos (${availableProducts.length})</option>`;
         sortedOptions.forEach(value => {
@@ -699,33 +692,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function renderProductList(products) {
         ui.productResultsList.innerHTML = '';
-        
         if (products.length === 0) {
-            ui.productResultsList.innerHTML = `
-                <div class="empty-search-state">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                    <p>No se encontraron productos con estos filtros.</p>
-                </div>`;
+            ui.productResultsList.innerHTML = `<div class="empty-search-state"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg><p>No se encontraron productos con estos filtros.</p></div>`;
             return;
         }
-
         products.forEach(product => {
             const originalIndex = csvData.findIndex(p => p === product);
-            
             const card = document.createElement('div');
             card.className = 'product-card';
             card.dataset.index = originalIndex;
-            
             const imgUrl = product['imagen_url_web'];
             let imgHTML = '<div class="card-no-thumb">Sin foto</div>';
             if (imgUrl && imgUrl.trim() !== "") {
                 imgHTML = `<img src="${imgUrl}" class="card-thumb" alt="mini" loading="lazy" onerror="this.parentNode.innerHTML='<div class=\'card-no-thumb\'>Error</div>'">`;
             }
-
             const typeTag = product['Desc_Familia_web'] ? `<span class="tag">${product['Desc_Familia_web'].split(' ')[0]}</span>` : '';
             const classTag = product['en_16165_anexo_c_deslizamiento_pendulo'] ? `<span class="tag">C${product['en_16165_anexo_c_deslizamiento_pendulo']}</span>` : '';
-            
-            // <<-- CORRECCIÓN 2: Lógica para la etiqueta de espesor en cm y mm
             let espesorTag = '';
             const espesorValue = product['Espesor(mm)'];
             if (espesorValue) {
@@ -737,27 +719,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     espesorTag = `<span class="tag">${cmString} cm / ${mmString} mm</span>`;
                 }
             }
-
-            card.innerHTML = `
-                <div class="card-thumb-container">${imgHTML}</div>
-                <div class="card-info">
-                    <h4 class="card-title">${product.MODELO || 'S/M'} - ${product.COLOR || 'S/C'}</h4>
-                    <p class="card-sub">${product.FORMATO || ''} | ${product.Acabado || ''}</p>
-                    <div class="card-tags">
-                        ${typeTag}
-                        ${classTag}
-                        ${espesorTag}
-                    </div>
-                </div>
-            `;
-
+            card.innerHTML = `<div class="card-thumb-container">${imgHTML}</div><div class="card-info"><h4 class="card-title">${product.MODELO || 'S/M'} - ${product.COLOR || 'S/C'}</h4><p class="card-sub">${product.FORMATO || ''} | ${product.Acabado || ''}</p><div class="card-tags">${typeTag}${classTag}${espesorTag}</div></div>`;
             card.addEventListener('click', () => goToDetailMode(originalIndex));
             ui.productResultsList.appendChild(card);
         });
     }
     
     function clearFilters() {
-         ui.searchKeyword.value = ''; // <<-- NUEVO
+         ui.searchKeyword.value = '';
          ui.quickFilters.forEach(qf => qf.checked = false);
          Object.values(ui.allSelectFilters).forEach(select => select.value = '');
          updateFiltersAndProductList();
@@ -767,13 +736,13 @@ document.addEventListener('DOMContentLoaded', function() {
     async function loadDataAndInitializeApp() {
         const csvFilePath = 'BD_contrac_presto3.csv'; 
         ui.statusMessage.textContent = 'Cargando CSV...';
+        ui.productResultsList.innerHTML = `<div class="empty-search-state"><p>Cargando productos...</p></div>`;
         try {
             const response = await fetch(csvFilePath);
             if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
             const csvText = await response.text();
             csvData = parseCSV(csvText);
             if (csvData.length === 0) throw new Error("CSV vacío o inválido.");
-            
             Object.values(ui.allSelectFilters).forEach(select => { select.disabled = false; });
             updateFiltersAndProductList();
         } catch (error) {
@@ -790,10 +759,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const headers = headerLine.split(delimiter).map(h => h.trim());
         const data = [];
         for (let i = 1; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (line === '') continue;
-            const values = line.split(delimiter);
-            if (values.length < headers.length) continue;
+            const line = lines[i].trim(); if (line === '') continue;
+            const values = line.split(delimiter); if (values.length < headers.length) continue;
             const entry = {};
             headers.forEach((header, index) => entry[header] = values[index] ? values[index].trim() : '');
             data.push(entry);
@@ -804,133 +771,75 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- EXPORTACIÓN (PDF / TXT / IMG) ---
     async function generarPDF() {
         if (selectedProductIndex === null) return;
-        
-        const originalText = ui.btnDescargarPdf.textContent;
-        ui.btnDescargarPdf.textContent = '...';
-        ui.btnDescargarPdf.disabled = true;
-
+        ui.btnDescargarPdf.textContent = '...'; ui.btnDescargarPdf.disabled = true;
         try {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('p', 'mm', 'a4');
             const product = csvData[selectedProductIndex];
-            
             const M_LEFT = 20, M_TOP = 20, WIDTH = 170;
             let y = M_TOP;
-
             const imgToBase64 = async (url) => {
                 if (!url) return null;
                 try {
-                    const res = await fetch(url);
-                    const blob = await res.blob();
-                    return new Promise((r) => {
-                        const reader = new FileReader();
-                        reader.onloadend = () => r(reader.result);
-                        reader.readAsDataURL(blob);
-                    });
+                    const res = await fetch(url); const blob = await res.blob();
+                    return new Promise((r) => { const reader = new FileReader(); reader.onloadend = () => r(reader.result); reader.readAsDataURL(blob); });
                 } catch { return null; }
             };
-
             const logo = await imgToBase64('LOGO-PAMESA.jpg');
             if (logo) doc.addImage(logo, 'JPEG', M_LEFT, 10, 50, 10);
-
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(12);
-            doc.text('Prescripción Técnica', 210 - 20, 16, { align: 'right' });
-            y = 25;
-            doc.setDrawColor(206, 23, 25); doc.line(M_LEFT, y, 210-20, y); y += 10;
-
-            doc.setFontSize(16); doc.setTextColor(206, 23, 25);
-            doc.text(`${product.MODELO} - ${product.COLOR}`, M_LEFT, y);
-            y += 10;
-
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.text('Prescripción Técnica', 210 - 20, 16, { align: 'right' });
+            y = 25; doc.setDrawColor(206, 23, 25); doc.line(M_LEFT, y, 210-20, y); y += 10;
+            doc.setFontSize(16); doc.setTextColor(206, 23, 25); doc.text(`${product.MODELO} - ${product.COLOR}`, M_LEFT, y); y += 10;
             const prodImg = await imgToBase64(ui.detailImage.src);
-            let textX = M_LEFT;
-            let textW = WIDTH;
-
-            if (prodImg) {
-                doc.addImage(prodImg, 'JPEG', M_LEFT, y, 60, 60);
-                textX = M_LEFT + 65; 
-                textW = WIDTH - 65;
-            }
-
+            let textX = M_LEFT; let textW = WIDTH;
+            if (prodImg) { doc.addImage(prodImg, 'JPEG', M_LEFT, y, 60, 60); textX = M_LEFT + 65; textW = WIDTH - 65; }
             const rawHTML = ui.output.innerHTML;
             const cleanText = rawHTML.replace(/<br\s*\/?>/gi, '\n').replace(/&nbsp;/g, ' ');
             const paragraphs = cleanText.split('\n');
-
-            doc.setFontSize(9); doc.setTextColor(0,0,0);
-            let currentY = y;
-            
+            doc.setFontSize(9); doc.setTextColor(0,0,0); let currentY = y;
             paragraphs.forEach(para => {
                 if (!para.trim()) { currentY += 4; return; }
-                
                 if (prodImg && currentY > (y + 65)) { textX = M_LEFT; textW = WIDTH; }
-
                 const parts = para.split(/(<span class="resaltado">.*?<\/span>)/g);
-                let lineWidth = 0;
-
-                const words = [];
+                let lineWidth = 0; const words = [];
                 parts.forEach(part => {
-                    const isBold = part.startsWith('<span');
-                    const content = isBold ? part.replace(/<[^>]+>/g, '') : part;
-                    content.split(' ').forEach(w => {
-                        if(w) words.push({ text: w + ' ', bold: isBold });
-                    });
+                    const isBold = part.startsWith('<span'); const content = isBold ? part.replace(/<[^>]+>/g, '') : part;
+                    content.split(' ').forEach(w => { if(w) words.push({ text: w + ' ', bold: isBold }); });
                 });
-
                 words.forEach(wordObj => {
-                    doc.setFont('helvetica', wordObj.bold ? 'bold' : 'normal');
-                    doc.setTextColor(wordObj.bold ? '#ce1719' : '#333333');
+                    doc.setFont('helvetica', wordObj.bold ? 'bold' : 'normal'); doc.setTextColor(wordObj.bold ? '#ce1719' : '#333333');
                     const wWidth = doc.getStringUnitWidth(wordObj.text) * 9 / doc.internal.scaleFactor;
-
                     if (lineWidth + wWidth > textW) {
-                        currentY += 4;
-                        lineWidth = 0;
-                        if (prodImg && currentY > (y + 65)) { textX = M_LEFT; textW = WIDTH; } 
-                        
-                        if (currentY > 280) {
-                            doc.addPage();
-                            currentY = 20;
-                            textX = M_LEFT; textW = WIDTH;
-                        }
+                        currentY += 4; lineWidth = 0;
+                        if (prodImg && currentY > (y + 65)) { textX = M_LEFT; textW = WIDTH; }
+                        if (currentY > 280) { doc.addPage(); currentY = 20; textX = M_LEFT; textW = WIDTH; }
                     }
-                    
-                    doc.text(wordObj.text, textX + lineWidth, currentY);
-                    lineWidth += wWidth;
+                    doc.text(wordObj.text, textX + lineWidth, currentY); lineWidth += wWidth;
                 });
-                
                 currentY += 5;
             });
-
             const pages = doc.internal.getNumberOfPages();
-            for(let i=1; i<=pages; i++) {
-                doc.setPage(i);
-                doc.setFontSize(8); doc.setTextColor(150);
-                doc.text(`Pág ${i}/${pages} | ${new Date().toLocaleDateString()}`, 105, 290, { align: 'center' });
-            }
-
+            for(let i=1; i<=pages; i++) { doc.setPage(i); doc.setFontSize(8); doc.setTextColor(150); doc.text(`Pág ${i}/${pages} | ${new Date().toLocaleDateString()}`, 105, 290, { align: 'center' }); }
             const fname = `Prescripcion_${product.MODELO}_${product.COLOR}.pdf`;
             doc.save(fname);
-
-        } catch (e) {
-            console.error(e);
-            alert('Error al generar PDF');
-        } finally {
-            ui.btnDescargarPdf.textContent = 'PDF';
-            ui.btnDescargarPdf.disabled = false;
-        }
+        } catch (e) { console.error(e); alert('Error al generar PDF'); } 
+        finally { ui.btnDescargarPdf.textContent = 'PDF'; ui.btnDescargarPdf.disabled = false; }
     }
 
     // --- EVENTOS ---
+    ui.loginButton.addEventListener('click', handleLogin);
+    [ui.loginUsername, ui.loginPassword].forEach(el => el.addEventListener('keyup', (e) => { if (e.key === 'Enter') handleLogin(); }));
+    ui.logoutLink.addEventListener('click', (e) => { e.preventDefault(); handleLogout(); });
+
     ui.btnBackSearch.addEventListener('click', goToSearchMode);
-    
     ui.btnClearFilters.addEventListener('click', clearFilters);
-    ui.searchKeyword.addEventListener('input', updateFiltersAndProductList); // <<-- NUEVO
+    ui.searchKeyword.addEventListener('input', updateFiltersAndProductList);
     ui.quickFilters.forEach(el => el.addEventListener('change', updateFiltersAndProductList));
     Object.values(ui.allSelectFilters).forEach(el => el.addEventListener('change', updateFiltersAndProductList));
-    
     Array.from(ui.formulario.elements).forEach(el => el.addEventListener('input', generarTexto));
-
+    
     ui.btnCopiar.addEventListener('click', () => {
+        savePrescriptionToHistory();
         navigator.clipboard.writeText(ui.output.textContent);
         const prev = ui.btnCopiar.textContent;
         ui.btnCopiar.textContent = '¡Copiado!';
@@ -938,32 +847,28 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     ui.btnDescargarTxt.addEventListener('click', () => {
+        savePrescriptionToHistory();
         const blob = new Blob([ui.output.textContent], {type: 'text/plain'});
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'prescripcion.txt';
-        a.click();
+        a.href = URL.createObjectURL(blob); a.download = 'prescripcion.txt'; a.click();
     });
 
-    ui.btnDescargarPdf.addEventListener('click', generarPDF);
+    ui.btnDescargarPdf.addEventListener('click', () => {
+        savePrescriptionToHistory();
+        generarPDF();
+    });
 
     ui.btnDescargarImagen.addEventListener('click', async () => {
-        const url = ui.detailImage.src;
-        if(!url) return;
+        const url = ui.detailImage.src; if(!url) return;
         try {
-            const res = await fetch(url);
-            const blob = await res.blob();
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'imagen_producto.jpg';
-            a.click();
-        } catch {
-            window.open(url, '_blank');
-        }
+            const res = await fetch(url); const blob = await res.blob();
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+            a.download = 'imagen_producto.jpg'; a.click();
+        } catch { window.open(url, '_blank'); }
     });
 
-    // INICIO
-    loadDataAndInitializeApp();
+    // INICIO DE LA APLICACIÓN
+    checkLogin();
 });
 </script>
 </body>
