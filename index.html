@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Prescripciones de Obra v3.1 - Pamesa Cerámica</title>
+    <title>Generador de Prescripciones de Obra v3.2 - Pamesa Cerámica</title>
     
     <!-- LIBRERÍAS EXTERNAS -->
     <!-- Fuente Montserrat -->
@@ -216,11 +216,13 @@
             margin-bottom: 20px;
         }
         #detail-image {
-            width: 100%; 
-    height: auto; /* ESTO ES CLAVE: la altura se ajusta sola para no deformar la imagen */
+    width: 100%; 
+    height: auto; 
     object-fit: contain;
-    display: block; /* Buena práctica para asegurar que no haya espacios extraños */
-        }
+    display: block;
+    /* AÑADE ESTA LÍNEA PARA LIMITAR LA ALTURA MÁXIMA */
+    max-height: 40vh; 
+}
 
         /* Texto Generado en Detalle */
         #texto-generado {
@@ -313,7 +315,7 @@
     <header class="header-corporativo">
         <div class="header-container">
             <img src="LOGO-PAMESA.jpg" alt="Logo Pamesa Cerámica" onerror="this.style.display='none'">
-            <h1>Generador de Prescripciones de Obra v3.1</h1>
+            <h1>Generador de Prescripciones de Obra v3.2</h1>
         </div>
     </header>
 
