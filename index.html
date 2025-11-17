@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Prescripciones de Obra v3.9 - Pamesa Cerámica</title>
+    <title>Generador de Prescripciones de Obra v3.10 - Pamesa Cerámica</title>
     
     <!-- LIBRERÍAS EXTERNAS -->
     <!-- Fuente Montserrat -->
@@ -385,7 +385,7 @@
         <div class="header-container">
             <img src="LOGO-PAMESA.jpg" alt="Logo Pamesa Cerámica" onerror="this.style.display='none'">
             <div style="text-align: right;">
-                <h1 style="margin-bottom: 5px;">Generador de Prescripciones v3.9</h1>
+                <h1 style="margin-bottom: 5px;">Generador de Prescripciones v3.10</h1>
                 <div id="user-info" class="oculto" style="font-size: 0.9em;">
                     <span id="user-greeting"></span> | <a href="#" id="logout-link">Salir</a>
                 </div>
@@ -722,8 +722,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let textoHTML = activeTemplate;
         for (const key in values) {
-            textoHTML = textoHTML.replace(new RegExp(`{${key}}`, 'g'), values[key] || '[DATO NO ESPECIFICADO]');
-        }
+    let valorSeguro = values[key] || '[DATO NO ESPECIFICADO]';
+    // Convierte los caracteres peligrosos a su versión segura para HTML
+    if (typeof valorSeguro === 'string') {
+        valorSeguro = valorSeguro.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    textoHTML = textoHTML.replace(new RegExp(`{${key}}`, 'g'), valorSeguro);
+}
         ui.output.innerHTML = textoHTML;
     }
 
