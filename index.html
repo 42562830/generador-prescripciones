@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Prescripciones de Obra v3.10 - Pamesa Cerámica</title>
+    <title>Generador de Prescripciones de Obra v3.11 - Pamesa Cerámica</title>
     
     <!-- LIBRERÍAS EXTERNAS -->
     <!-- Fuente Montserrat -->
@@ -385,7 +385,7 @@
         <div class="header-container">
             <img src="LOGO-PAMESA.jpg" alt="Logo Pamesa Cerámica" onerror="this.style.display='none'">
             <div style="text-align: right;">
-                <h1 style="margin-bottom: 5px;">Generador de Prescripciones v3.10</h1>
+                <h1 style="margin-bottom: 5px;">Generador de Prescripciones v3.11</h1>
                 <div id="user-info" class="oculto" style="font-size: 0.9em;">
                     <span id="user-greeting"></span> | <a href="#" id="logout-link">Salir</a>
                 </div>
@@ -523,6 +523,29 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // --- INICIO CÓDIGO AÑADIDO: MOSTRAR VERSIÓN EN LOGIN ---
+    const headerTitleElement = document.querySelector('.header-corporativo h1');
+    const loginBox = document.getElementById('login-box');
+
+    if (headerTitleElement && loginBox) {
+        const fullTitle = headerTitleElement.textContent; // Obtiene "Generador de Prescripciones v3.11"
+        const versionMatch = fullTitle.match(/v[\d.]+/); // Busca un patrón como "v3.11"
+
+        if (versionMatch && versionMatch[0]) {
+            const versionString = versionMatch[0]; // Se queda con "v3.11"
+            const versionElement = document.createElement('p'); // Crea un nuevo párrafo <p>
+            versionElement.textContent = versionString; // Le pone el texto de la versión
+
+            // Le añadimos unos estilos para que se vea bien
+            versionElement.style.marginTop = '24px';
+            versionElement.style.fontSize = '0.8em';
+            versionElement.style.color = '#888';
+            versionElement.style.fontWeight = '500';
+
+            loginBox.appendChild(versionElement); // Añade el párrafo al final del cuadro de login
+        }
+    }
+    // --- FIN CÓDIGO AÑADIDO ---
     // --- ELEMENTOS DEL DOM ---
     const ui = {
         loginOverlay: document.getElementById('login-overlay'),
@@ -850,8 +873,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 imgHTML = `<img src="${imgUrl}" class="card-thumb" alt="mini" loading="lazy" onerror="this.parentNode.innerHTML='<div class=\'card-no-thumb\'>Error</div>'">`;
             }
 
-            const typeTag = product['Desc_Familia_web'] ? `<span class="tag">${product['Desc_Familia_web'].split(' ')[0]}</span>` : '';
-            const classTag = product['en_16165_anexo_c_deslizamiento_pendulo'] ? `<span class="tag">C${product['en_16165_anexo_c_deslizamiento_pendulo']}</span>` : '';
+            const typeTag = product['Desc_Familia_web'] ? `<span class="tag">${product['Desc_Familia_web']}</span>` : '';
+            const classTag = product['en_16165_anexo_c_deslizamiento_pendulo'] ? `<span class="tag">${product['en_16165_anexo_c_deslizamiento_pendulo']}</span>` : '';
             let espesorTag = '';
             const espesorValue = product['Espesor(mm)'];
             if (espesorValue) {
