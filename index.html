@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Prescripciones de Obra v3.11 - Pamesa Cerámica</title>
+    <title>Generador de Prescripciones de Obra v3.12 - Pamesa Cerámica</title>
     
     <!-- LIBRERÍAS EXTERNAS -->
     <!-- Fuente Montserrat -->
@@ -385,7 +385,7 @@
         <div class="header-container">
             <img src="LOGO-PAMESA.jpg" alt="Logo Pamesa Cerámica" onerror="this.style.display='none'">
             <div style="text-align: right;">
-                <h1 style="margin-bottom: 5px;">Generador de Prescripciones v3.11</h1>
+                <h1 style="margin-bottom: 5px;">Generador de Prescripciones v3.12</h1>
                 <div id="user-info" class="oculto" style="font-size: 0.9em;">
                     <span id="user-greeting"></span> | <a href="#" id="logout-link">Salir</a>
                 </div>
@@ -465,7 +465,7 @@
                         <div id="detail-image-container"><img id="detail-product-image" src="" alt="Producto"></div>
                         <form id="formulario-prescripcion">
                             <fieldset><legend>Materiales de Colocación</legend><div class="campo"><label>Nombre Adhesivo</label><input type="text" id="adhesivo_nombre" value="MARCA ADHESIVO"></div><div class="campo"><label>Fabricante Adhesivo</label><input type="text" id="adhesivo_fabricante" value="NOMBRE FABRICANTE"></div><div class="campo"><label>Tipo Adhesivo (EN 12004)</label><input type="text" id="adhesivo_tipo" value=""></div><div class="campo"><label>Nombre Mortero Juntas</label><input type="text" id="mortero_nombre" value="MARCA MORTERO"></div><div class="campo"><label>Fabricante Mortero</label><input type="text" id="mortero_fabricante" value="NOMBRE FABRICANTE"></div></fieldset>
-                            <fieldset><legend>Detalles Ejecución</legend><div class="campo"><label>Ancho junta (mm)</label><input type="number" id="junta_maxima" value="15"></div><div class="campo"><label>Ancho perimetral (mm)</label><input type="number" id="junta_perimetral" value="5"></div></fieldset>
+                            <fieldset><legend>Detalles Ejecución</legend><div class="campo"><label>Ancho junta (mm)</label><input type="number" id="junta_maxima" value="3"></div><div class="campo"><label>Ancho perimetral (mm)</label><input type="number" id="junta_perimetral" value="5"></div></fieldset>
                             <input type="hidden" id="tipo_material">
                             <input type="hidden" id="fabricante" value="PAMESA CERÁMICA">
                             <input type="hidden" id="coleccion">
@@ -528,11 +528,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginBox = document.getElementById('login-box');
 
     if (headerTitleElement && loginBox) {
-        const fullTitle = headerTitleElement.textContent; // Obtiene "Generador de Prescripciones v3.11"
-        const versionMatch = fullTitle.match(/v[\d.]+/); // Busca un patrón como "v3.11"
+        const fullTitle = headerTitleElement.textContent; // Obtiene "Generador de Prescripciones v3.12"
+        const versionMatch = fullTitle.match(/v[\d.]+/); // Busca un patrón como "v3.12"
 
         if (versionMatch && versionMatch[0]) {
-            const versionString = versionMatch[0]; // Se queda con "v3.11"
+            const versionString = versionMatch[0]; // Se queda con "v3.12"
             const versionElement = document.createElement('p'); // Crea un nuevo párrafo <p>
             versionElement.textContent = versionString; // Le pone el texto de la versión
 
@@ -709,7 +709,8 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('modulo_rotura').value = product['iso_10545_4_resistencia_flexion'] || '';
         document.getElementById('carga_rotura').value = product['iso_10545_4_fuerza_rotura'] || '';
         document.getElementById('adhesivo_tipo').value = product['Adhesivo'] || 'C2';
-        document.getElementById('junta_maxima').value = revestimientoTypes.includes(productType) ? "4" : "15";
+        document.getElementById('junta_maxima').value = "3"; 
+        document.getElementById('junta_perimetral').value = "5";
 
         const imageUrl = product['imagen_url_web'];
         if (imageUrl && imageUrl.trim() !== "") {
@@ -909,7 +910,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- CARGA DATOS ---
     async function loadDataAndInitializeApp() {
-        const csvFilePath = 'BD_contrac_presto4.csv'; 
+        const csvFilePath = 'BD-CONTRAC-PRESTO-18-11-2025.csv'; 
         ui.statusMessage.textContent = 'Cargando catálogo...';
         // --- INICIO MEJORA: Mostrar Skeleton Loaders ---
         let skeletonHTML = '';
