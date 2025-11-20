@@ -630,700 +630,684 @@
         </div>
     </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // --- MOSTRAR VERSIÓN EN LOGIN (Código Mejorado) ---
-    const headerTitleElement = document.querySelector('.header-corporativo h1');
-    const loginBox = document.getElementById('login-box');
-
-    if (headerTitleElement && loginBox) {
-        const fullTitle = headerTitleElement.textContent; 
-        const versionMatch = fullTitle.match(/v[\d.]+/); 
-
-        if (versionMatch && versionMatch[0]) {
-            const versionElement = document.createElement('p');
-            versionElement.textContent = versionMatch[0]; 
-            versionElement.style.marginTop = '20px';
-            versionElement.style.fontSize = '0.8em';
-            versionElement.style.color = '#9ca3af';
-            versionElement.style.fontWeight = '500';
-            loginBox.appendChild(versionElement);
-        }
-    }
-
-    // --- REFERENCIAS DOM ---
-    const ui = {
-        loginOverlay: document.getElementById('login-overlay'),
-        loginButton: document.getElementById('login-button'),
-        loginUsername: document.getElementById('login-username'),
-        loginPassword: document.getElementById('login-password'),
-        loginError: document.getElementById('login-error'),
-        userInfo: document.getElementById('user-info'),
-        userGreeting: document.getElementById('user-greeting'),
-        logoutLink: document.getElementById('logout-link'),
-        historyPanel: document.getElementById('history-panel'),
-        historyList: document.getElementById('history-list'),
-        viewSearch: document.getElementById('view-search'),
-        viewDetail: document.getElementById('view-detail'),
-        btnBackSearch: document.getElementById('btn-back-search'),
-        formulario: document.getElementById('formulario-prescripcion'),
-        statusMessage: document.getElementById('status-message'),
-        btnClearFilters: document.getElementById('btn-clear-filters'),
-        searchKeyword: document.getElementById('search-keyword'),
-        quickFilters: Array.from(document.querySelectorAll('.filtro-toggle-input')),
-        allSelectFilters: Array.from(document.querySelectorAll('select[data-csv-col]')).reduce((acc, select) => {
-            acc[select.dataset.csvCol] = select;
-            return acc;
-        }, {}),
-        productResultsList: document.getElementById('product-results-list'),
-        detailImage: document.getElementById('detail-product-image'),
-        detailImageContainer: document.getElementById('detail-image-container'),
-        output: document.getElementById('texto-generado'),
-        btnCopiar: document.getElementById('btn-copiar'),
-        btnDescargarTxt: document.getElementById('btn-descargar-txt'),
-        btnDescargarPdf: document.getElementById('btn-descargar-pdf'),
-        btnDescargarImagen: document.getElementById('btn-descargar-imagen'),
-        linkDAP: document.getElementById('link-dap'),
-        linkDOP: document.getElementById('link-dop'),
-        modalOverlay: document.getElementById('image-modal-overlay'),
-        modalImage: document.getElementById('modal-image'),
-        modalCloseBtn: document.getElementById('modal-close-btn')
-    };
-
-    // --- ESTADO Y CONFIGURACIÓN ---
-    let csvData = [];
-    let selectedProductIndex = null;
-    let currentUser = null;
-    const MASTER_PASSWORD = 'pamesa2025';
-    
-    const revestimientoTypes = [
-        'Revestimiento pasta blanca no rectificada',
-        'Revestimiento pasta roja no rectificado',
-        'Revestimiento pasta blanca rectificada'
-    ];
-    
-    // --- PLANTILLAS DE TEXTO ---
-    const pavimentoTemplate = `Suministro y ejecución de pavimento con <span class="resaltado">{tipo_material}</span>, de aspecto <span class="resaltado">{aspecto}</span>, colección <span class="resaltado">{coleccion}</span>, color <span class="resaltado">{color}</span> de <span class="resaltado">{fabricante}</span>. Conformado por prensado en seco, tratado en monococción a temperatura de 1200ºC.\n\nCerámica con dimensiones nominales de (Ancho x Alto x Espesor) <span class="resaltado">{dim_ancho}</span>x<span class="resaltado">{dim_alto}</span>x<span class="resaltado">{dim_espesor}</span> cm, desviación de longitud/anchura, rectitud de lados, ortogonalidad y planimetría inferior a <span class="resaltado">{desviacion}</span> (<span class="resaltado">{norma_dimensiones}</span>).\n\nDestonificado <span class="resaltado">{destonificado}</span>, con una absorción de agua muy baja <span class="resaltado">{absorcion_agua}</span> según ISO 10545-3. Clasificación de suelos según su resbaladicidad <span class="resaltado">{clase_resbaladicidad}</span> (CTE DBSUA), resistencia al deslizamiento <span class="resaltado">{valor_rd}</span> (UNE 41901:2017 EX). Módulo de rotura <span class="resaltado">{modulo_rotura}</span> (ISO-13006:2018 UNE-EN 14411:2016) y carga de rotura <span class="resaltado">{carga_rotura}</span> según ISO10545-4.\n\nPavimento de <span class="resaltado">{uso_transito}</span> conforme a la clasificación de baldosas según uso de la Guía de la Baldosa Cerámica (Documento reconocido DRB 01/11), resistente al choque térmico, al cuarteo, a la helada, a las manchas <span class="resaltado">{resistencia_manchas}</span>, según ISO 10545-14 y a los ataques químicos: <span class="resaltado">{resistencia_quimica}</span>, según ISO 10545-13.\n\nContribuye a los estándares de construcción sostenible y saludable (LEED, BREEAM, WELL) gracias a disponer de Declaración Ambiental de Producto propia (DAP), no ser una fuente emisora de sustancias peligrosas COV’s ni formaldehidos, así como por disponer de contenido de material reciclado >6%. Disponible marcado CE.\n\nCerámica recibida sobre recrecido cementoso sin calefacción radiante (no incluido), apto para la colocación en capa fina y tránsito previsto, con adhesivo de altas prestaciones con excelente adherencia y deformabilidad, <span class="resaltado">{adhesivo_nombre}</span> de <span class="resaltado">{adhesivo_fabricante}</span>, tipo <span class="resaltado">{adhesivo_tipo}</span>, según EN 12004, prescrito de acuerdo a las indicaciones de la UNE 138002 y rejuntadas con mortero de juntas cementoso de fraguado y endurecimiento rápido, <span class="resaltado">{mortero_nombre}</span> de <span class="resaltado">{mortero_fabricante}</span>, según EN 13888, para juntas de hasta <span class="resaltado">{junta_maxima}</span>mm.\n\nI/p.p medios auxiliares. Utilización de p/p de Crucetas Autonivelantes (no incluidas), formación de juntas perimetrales continuas, de anchura no menor de <span class="resaltado">{junta_perimetral}</span> mm, en los límites con paredes, pilares exentos y elevaciones de nivel y, en su caso, juntas de partición intermedias. Respetar juntas estructurales existentes en el soporte. Incluso limpieza y comprobación del grado de humedad de la base. Replanteo de niveles. Replanteo de la disposición de las baldosas y juntas de movimiento. Aplicación del adhesivo. Colocación de las crucetas. Colocación de las baldosas con llana dentada y doble encolado. Relleno, si procede, de las juntas de partición intermedias. Rejuntado. Eliminación y limpieza del material sobrante. Limpieza inicial del pavimento al finalizar la obra y protección hasta entrega de obra. Todo el proceso de colocación se efectuará según indicaciones de la dirección facultativa y norma UNE 138002.`;
-    
-    const revestimientoTemplate = `Suministro y ejecución de revestimiento con <span class="resaltado">{tipo_material}</span>, de aspecto <span class="resaltado">{aspecto}</span>, colección <span class="resaltado">{coleccion}</span>, color <span class="resaltado">{color}</span> de <span class="resaltado">{fabricante}</span>.\n\nCerámica con dimensiones nominales (Ancho x Largo x Espesor) <span class="resaltado">{dim_ancho}</span>x<span class="resaltado">{dim_alto}</span>x<span class="resaltado">{dim_espesor}</span> cm, desviación de longitud/anchura, rectitud de lados, ortogonalidad y planimetría inferior a <span class="resaltado">{desviacion}</span> (<span class="resaltado">{norma_dimensiones}</span>).\n\nDestonificado <span class="resaltado">{destonificado}</span> con una absorción de agua <span class="resaltado">{absorcion_agua}</span>, módulo de rotura <span class="resaltado">{modulo_rotura}</span> y fuerza de rotura <span class="resaltado">{carga_rotura}</span> (ISO-13006:2018 UNE-EN 14411:2016).\n\nContribuye a los estándares de construcción sostenible y saludable (LEED, BREEAM, WELL) gracias a disponer de Declaración Ambiental de Producto propia (DAP), no ser una fuente emisora de sustancias peligrosas COVs ni formaldehidos, así como por disponer de contenido de material reciclado >6%.\n\nColocación en capa fina, con adhesivo cementoso tecnológico avanzado, <span class="resaltado">{adhesivo_nombre}</span> de <span class="resaltado">{adhesivo_fabricante}</span>, tipo <span class="resaltado">{adhesivo_tipo}</span> según EN 12004, prescrito de acuerdo a las indicaciones de la UNE 138002 y rejuntadas con mortero de juntas cementoso de fraguado y endurecimiento rápido, <span class="resaltado">{mortero_nombre}</span> de <span class="resaltado">{mortero_fabricante}</span>, según EN 13888, para juntas de hasta <span class="resaltado">{junta_maxima}</span> mm.\n\nI/p.p medios auxiliares. Utilización de p/p de Crucetas Autonivelantes (no incluidas), formación de juntas perimetrales continuas, de anchura no menor de <span class="resaltado">{junta_perimetral}</span> mm, en los límites con paredes, pilares exentos y elevaciones de nivel y, en su caso, juntas de partición intermedias. Respetar juntas estructurales existentes en el soporte. Limpieza y comprobación del grado de humedad de la base. Replanteo de niveles. Replanteo de la disposición de las baldosas y juntas de movimiento. Aplicación del adhesivo. Colocación de las crucetas. Colocación de las baldosas con llana dentada y doble encolado. Relleno, si procede, de las juntas de partición intermedias. Rejuntado. Eliminación y limpieza del material sobrante. Limpieza inicial del pavimento al finalizar la obra y protección hasta entrega de obra. Todo el proceso de colocación se efectuará según indicaciones de la dirección facultativa y norma UNE 138002.`;
-    
-    const pavimentoPastaRojaTemplate = `Suministro y ejecución de pavimento con <span class="resaltado">{tipo_material}</span>, de aspecto <span class="resaltado">{aspecto}</span>, colección <span class="resaltado">{coleccion}</span>, color <span class="resaltado">{color}</span> de <span class="resaltado">{fabricante}</span>. Conformado por prensado en seco, tratado en monococción a temperatura de 1145ºC.\n\nCerámica con dimensiones nominales de (Ancho x Alto x Espesor) <span class="resaltado">{dim_ancho}</span>x<span class="resaltado">{dim_alto}</span>x<span class="resaltado">{dim_espesor}</span> cm, desviación de longitud/anchura, rectitud de lados, ortogonalidad y planimetría inferior a <span class="resaltado">{desviacion}</span> (<span class="resaltado">{norma_dimensiones}</span>).\n\nDestonificado <span class="resaltado">{destonificado}</span>, con una absorción de agua baja <span class="resaltado">{absorcion_agua}</span> según ISO 10545-3. Clasificación de suelos según su resbaladicidad <span class="resaltado">{clase_resbaladicidad}</span> (CTE DBSUA), resistencia al deslizamiento <span class="resaltado">{valor_rd}</span> (UNE 41901:2017 EX). Módulo de rotura <span class="resaltado">{modulo_rotura}</span> (ISO-13006:2018 UNE-EN 14411:2016) y carga de rotura <span class="resaltado">{carga_rotura}</span> según ISO10545-4.\n\nPavimento de <span class="resaltado">{uso_transito}</span> conforme a la clasificación de baldosas según uso de la Guía de la Baldosa Cerámica (Documento reconocido DRB 01/11), resistente al choque térmico, al cuarteo, a la helada, a las manchas <span class="resaltado">{resistencia_manchas}</span>, según ISO 10545-14 y a los ataques químicos: <span class="resaltado">{resistencia_quimica}</span>, según ISO 10545-13.\n\nContribuye a los estándares de construcción sostenible y saludable (LEED, BREEAM, WELL) gracias a disponer de Declaración Ambiental de Producto propia (DAP), no ser una fuente emisora de sustancias peligrosas COV’s ni formaldehidos, así como por disponer de contenido de material reciclado >6%. Disponible marcado CE.\n\nCerámica recibida sobre recrecido cementoso sin calefacción radiante (no incluido), apto para la colocación en capa fina y tránsito previsto, con adhesivo de altas prestaciones con excelente adherencia y deformabilidad, <span class="resaltado">{adhesivo_nombre}</span> de <span class="resaltado">{adhesivo_fabricante}</span>, tipo <span class="resaltado">{adhesivo_tipo}</span>, según EN 12004, prescrito de acuerdo a las indicaciones de la UNE 138002 y rejuntadas con mortero de juntas cementoso de fraguado y endurecimiento rápido, <span class="resaltado">{mortero_nombre}</span> de <span class="resaltado">{mortero_fabricante}</span>, según EN 13888, para juntas de hasta <span class="resaltado">{junta_maxima}</span>mm.\n\nI/p.p medios auxiliares. Utilización de p/p de Crucetas Autonivelantes (no incluidas), formación de juntas perimetrales continuas, de anchura no menor de <span class="resaltado">{junta_perimetral}</span> mm, en los límites con paredes, pilares exentos y elevaciones de nivel y, en su caso, juntas de partición intermedias. Respetar juntas estructurales existentes en el soporte. Incluso limpieza y comprobación del grado de humedad de la base. Replanteo de niveles. Replanteo de la disposición de las baldosas y juntas de movimiento. Aplicación del adhesivo. Colocación de las crucetas. Colocación de las baldosas con llana dentada y doble encolado. Relleno, si procede, de las juntas de partición intermedias. Rejuntado. Eliminación y limpieza del material sobrante. Limpieza inicial del pavimento al finalizar la obra y protección hasta entrega de obra. Todo el proceso de colocación se efectuará según indicaciones de la dirección facultativa y norma UNE 138002.`;
-
-    // --- SISTEMA DE LOGIN ---
-    function checkLogin() {
-        const username = localStorage.getItem('currentUser');
-        if (username) {
-            currentUser = username;
-            ui.userGreeting.textContent = `Hola, ${currentUser}`;
-            ui.userInfo.classList.remove('oculto');
-            ui.loginOverlay.style.opacity = '0';
-            setTimeout(() => ui.loginOverlay.classList.add('oculto'), 300);
-            ui.historyPanel.classList.remove('oculto');
-            loadDataAndInitializeApp();
-            displayHistory();
-        } else {
-            ui.loginOverlay.classList.remove('oculto');
-            ui.loginOverlay.style.opacity = '1';
-        }
-    }
-
-    function handleLogin() {
-        const username = ui.loginUsername.value.trim();
-        const password = ui.loginPassword.value.trim();
-        ui.loginError.textContent = '';
-        if (!username || !password) {
-            ui.loginError.textContent = 'Usuario y contraseña son obligatorios.';
-            return;
-        }
-        if (password === MASTER_PASSWORD) {
-            localStorage.setItem('currentUser', username);
-            checkLogin();
-        } else {
-            ui.loginError.textContent = 'Contraseña incorrecta.';
-            ui.loginPassword.value = '';
-        }
-    }
-
-    function handleLogout() {
-        localStorage.removeItem('currentUser');
-        currentUser = null;
-        location.search = ''; 
-        location.reload();
-    }
-    
-    // --- HISTORIAL ---
-    function savePrescriptionToHistory() {
-        if (!currentUser || selectedProductIndex === null) return;
-        const product = csvData[selectedProductIndex];
-    
-    const historyKey = `history_${currentUser}`;
-    let history = JSON.parse(localStorage.getItem(historyKey)) || [];
-    
-    const newEntry = { 
-        model: product.MODELO || 'S/M', 
-        color: product.COLOR || 'S/C', 
-        // --- AQUÍ GUARDAMOS EL ID CORRECTO ---
-        id: product['Id.Articulo'] || 'N/A', 
-        format: product.FORMATO || 'S/F', 
-        finish: product.Acabado || 'S/A', 
-        date: new Date().toLocaleString('es-ES') 
-    };
-    
-    // Evitamos duplicados consecutivos del mismo producto
-    if (history.length > 0 && history[0].id === newEntry.id) return;
-
-    history.unshift(newEntry);
-    if (history.length > 20) { history = history.slice(0, 20); }
-    localStorage.setItem(historyKey, JSON.stringify(history));
-    displayHistory();
-}
-
-function displayHistory() {
-    if (!currentUser) return;
-    const historyKey = `history_${currentUser}`;
-    const history = JSON.parse(localStorage.getItem(historyKey)) || [];
-    
-    ui.historyList.innerHTML = ''; 
-
-    if (history.length === 0) {
-        ui.historyList.innerHTML = `<p style="color: #999; text-align:center; padding:10px;">Aún no hay historial.</p>`;
-        return;
-    }
-
-    history.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'history-item';
-        // Añadimos estilo de cursor para indicar clic
-        div.style.cursor = 'pointer'; 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- MOSTRAR VERSIÓN EN LOGIN ---
+            const headerTitleElement = document.querySelector('.header-corporativo h1');
+            const loginBox = document.getElementById('login-box');
         
-        div.innerHTML = `
-            <strong>${item.model} - ${item.color}</strong>
-            <div class="details">${item.format} | ${item.finish}</div>
-            <small>${item.date}</small>
-        `;
+            if (headerTitleElement && loginBox) {
+                const fullTitle = headerTitleElement.textContent; 
+                const versionMatch = fullTitle.match(/v[\d.]+/); 
         
-        // --- EVENTO CLIC MEJORADO ---
-        div.addEventListener('click', () => {
-            // Buscamos de nuevo en el CSV por si el orden cambió
-            const index = csvData.findIndex(p => p['Id.Articulo'] === item.id);
-            
-            if (index !== -1) {
-                goToDetailMode(index);
-            } else {
-                alert('Este producto (ID: ' + item.id + ') ya no se encuentra en el catálogo cargado.');
-            }
-        });
-
-        ui.historyList.appendChild(div);
-    });
-}
-
-
-    // --- NAVEGACIÓN ENTRE VISTAS ---
-    function goToSearchMode() {
-        ui.viewDetail.classList.remove('active-view');
-        ui.viewSearch.classList.add('active-view');
-    }
-
-    unction goToDetailMode(productIndex) {
-    selectedProductIndex = productIndex;
-    const product = csvData[productIndex];
-    
-    if (product) {
-        populateDetailView(product);
-        ui.viewSearch.classList.remove('active-view');
-        ui.viewDetail.classList.add('active-view');
-        
-        // --- ACTUALIZACIÓN: Usar 'Id.Articulo' en la URL ---
-        // Usamos corchetes ['Id.Articulo'] porque tiene un punto en el nombre
-        const productId = product['Id.Articulo']; 
-        
-        if (productId) {
-            const newUrl = new URL(window.location);
-            newUrl.searchParams.set('producto', productId); // Ej: ?producto=12345
-            window.history.pushState({ page: 'detail', id: productId }, '', newUrl);
-        }
-    }
-
-
-    // --- LOGICA DE DETALLE Y GENERACIÓN DE TEXTO ---
-    function populateDetailView(product) {
-        const productType = product['Desc_Familia_web'] || '';
-        document.getElementById('tipo_material').value = productType;
-        document.getElementById('coleccion').value = product['MODELO'] || '';
-        document.getElementById('color').value = product['COLOR'] || '';
-        document.getElementById('aspecto').value = [product['Efecto'], product['Acabado']].filter(Boolean).join(' / ');
-        document.getElementById('dim_ancho').value = product['Ancho'] ? product['Ancho'].replace(',', '.') : '';
-        document.getElementById('dim_alto').value = product['Alto'] ? product['Alto'].replace(',', '.') : '';
-        document.getElementById('dim_espesor').value = product['Espesor(mm)'] ? product['Espesor(mm)'].replace(',', '.') : '';
-        document.getElementById('destonificado').value = product['Variacion_cromatica'] || '';
-        document.getElementById('absorcion_agua').value = product['iso_10545_3_absorcion_agua'] || '';
-        document.getElementById('clase_resbaladicidad').value = product['en_16165_anexo_c_deslizamiento_pendulo'] || '';
-        document.getElementById('valor_rd').value = product['(Rd)'] || '';
-        document.getElementById('resistencia_manchas').value = product['Resistenci_ a_manchas'] || '';
-        document.getElementById('resistencia_quimica').value = product['Resistencia_a_ataques_químicos'] || '';
-        document.getElementById('modulo_rotura').value = product['iso_10545_4_resistencia_flexion'] || '';
-        document.getElementById('carga_rotura').value = product['iso_10545_4_fuerza_rotura'] || '';
-        document.getElementById('adhesivo_tipo').value = product['Adhesivo'] || 'C2';
-        
-        // Valores por defecto
-        document.getElementById('junta_maxima').value = "3"; 
-        document.getElementById('junta_perimetral').value = "5";
-
-        // Imagen
-        const imageUrl = product['imagen_url_web'];
-        if (imageUrl && imageUrl.trim() !== "") {
-            ui.detailImage.src = imageUrl;
-            ui.detailImageContainer.style.display = 'flex';
-            ui.btnDescargarImagen.style.display = 'inline-flex';
-        } else {
-            ui.detailImage.src = ''; 
-            ui.detailImageContainer.style.display = 'none';
-            ui.btnDescargarImagen.style.display = 'none';
-        }
-
-        // Links
-        ui.linkDAP.href = product['declaracion_ambiental_producto'] || '#';
-        ui.linkDOP.href = product['declaracion_prestaciones'] || '#';
-        ui.linkDAP.style.display = product['declaracion_ambiental_producto'] ? 'inline-flex' : 'none';
-        ui.linkDOP.style.display = product['declaracion_prestaciones'] ? 'inline-flex' : 'none';
-        
-        generarTexto();
-    }
-    
-    function generarTexto() {
-        if (selectedProductIndex === null) return;
-        const values = {};
-        for (let el of ui.formulario.elements) { if (el.id) values[el.id] = el.value; }
-        
-        const selectedProductType = values['tipo_material'];
-        let activeTemplate;
-
-        if (selectedProductType === 'Pavimento pasta roja no rectificado') {
-            activeTemplate = pavimentoPastaRojaTemplate;
-        } else {
-            activeTemplate = revestimientoTypes.includes(selectedProductType) ? revestimientoTemplate : pavimentoTemplate;
-        }
-        
-        let textoHTML = activeTemplate;
-        for (const key in values) {
-            let valorSeguro = values[key] || '[DATO NO ESPECIFICADO]';
-            if (typeof valorSeguro === 'string') {
-                valorSeguro = valorSeguro.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            }
-            textoHTML = textoHTML.replace(new RegExp(`{${key}}`, 'g'), valorSeguro);
-        }
-        ui.output.innerHTML = textoHTML;
-        
-        // Feedback Visual (Animación)
-        ui.output.classList.remove('texto-actualizado');
-        void ui.output.offsetWidth; // Trigger reflow
-        ui.output.classList.add('texto-actualizado');
-    }
-
-    // --- URL STATE MANAGEMENT ---
-    function updateUrlState() {
-        const params = new URLSearchParams();
-        const keyword = ui.searchKeyword.value.trim();
-        if (keyword) params.set('q', keyword);
-
-        ui.quickFilters.forEach(qf => {
-            if (qf.checked) params.set(qf.id.replace('filtro-', ''), 'true');
-        });
-        
-        Object.values(ui.allSelectFilters).forEach(select => {
-            if (select.value) params.set(select.id.replace('search-', ''), select.value);
-        });
-
-        const newUrl = `${window.location.pathname}?${params.toString()}`;
-        history.pushState({ path: newUrl }, '', newUrl);
-    }
-
-    function applyStateFromUrl() {
-        const params = new URLSearchParams(window.location.search);
-        ui.searchKeyword.value = params.get('q') || '';
-        ui.quickFilters.forEach(qf => {
-            qf.checked = params.get(qf.id.replace('filtro-', '')) === 'true';
-        });
-        Object.values(ui.allSelectFilters).forEach(select => {
-            const paramValue = params.get(select.id.replace('search-', ''));
-            if (paramValue) select.value = paramValue;
-        });
-    }
-
-    // --- LÓGICA DE BÚSQUEDA Y FILTRADO ---
-    function updateFiltersAndProductList() {
-        ui.productResultsList.classList.add('is-loading');
-
-        setTimeout(() => {
-            const keyword = ui.searchKeyword.value.trim().toUpperCase();
-            let filteredProducts = csvData.filter(product => {
-                const keywordMatch = !keyword || 
-                    (product['Serie'] && product['Serie'].toUpperCase().includes(keyword)) || 
-                    (product['MODELO'] && product['MODELO'].toUpperCase().includes(keyword)) || 
-                    (product['Efecto'] && product['Efecto'].toUpperCase().includes(keyword)) || 
-                    (product['COLOR'] && product['COLOR'].toUpperCase().includes(keyword));
-                
-                const is20mm = !document.getElementById('filtro-20mm').checked || (product['Espesor(mm)'] && product['Espesor(mm)'].startsWith('2'));
-                const isExt = !document.getElementById('filtro-ext').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('EXT'));
-                const isDup = !document.getElementById('filtro-dup').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('DUP'));
-                
-                return keywordMatch && is20mm && isExt && isDup;
-            });
-
-            const activeSelectFilters = {};
-            Object.keys(ui.allSelectFilters).forEach(key => { if (ui.allSelectFilters[key].value) activeSelectFilters[key] = ui.allSelectFilters[key].value; });
-            
-            if (Object.keys(activeSelectFilters).length > 0) {
-                filteredProducts = filteredProducts.filter(product => Object.keys(activeSelectFilters).every(key => product[key] === activeSelectFilters[key]));
-            }
-            
-            // Actualizar selects dependientes
-            Object.keys(ui.allSelectFilters).forEach(currentKey => {
-                const otherFilters = { ...activeSelectFilters };
-                delete otherFilters[currentKey];
-                const availableProducts = csvData.filter(product => {
-                    const keywordMatch = !keyword || (product['Serie'] && product['Serie'].toUpperCase().includes(keyword)) || (product['MODELO'] && product['MODELO'].toUpperCase().includes(keyword)) || (product['Efecto'] && product['Efecto'].toUpperCase().includes(keyword)) || (product['COLOR'] && product['COLOR'].toUpperCase().includes(keyword));
-                    const quickFiltersPass = (!document.getElementById('filtro-20mm').checked || (product['Espesor(mm)'] && product['Espesor(mm)'].startsWith('2'))) && (!document.getElementById('filtro-ext').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('EXT'))) && (!document.getElementById('filtro-dup').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('DUP')));
-                    const otherSelectsPass = Object.keys(otherFilters).every(key => product[key] === otherFilters[key]);
-                    return keywordMatch && quickFiltersPass && otherSelectsPass;
-                });
-                repopulateSelectWithOptions(ui.allSelectFilters[currentKey], availableProducts);
-            });
-            
-            renderProductList(filteredProducts);
-            ui.statusMessage.textContent = `${filteredProducts.length} productos encontrados`;
-
-            // Botón limpiar activo
-            const hasActiveFilters = ui.searchKeyword.value || ui.quickFilters.some(qf => qf.checked) || Object.values(ui.allSelectFilters).some(s => s.value);
-            ui.btnClearFilters.classList.toggle('active', hasActiveFilters);
-
-            ui.productResultsList.classList.remove('is-loading');
-        }, 10);
-    }
-
-    function repopulateSelectWithOptions(selectElement, availableProducts) {
-        const currentValue = selectElement.value;
-        const csvCol = selectElement.dataset.csvCol;
-        const counts = availableProducts.reduce((acc, product) => {
-            const value = product[csvCol];
-            if (value) acc[value] = (acc[value] || 0) + 1;
-            return acc;
-        }, {});
-        const sortedOptions = Object.keys(counts).sort();
-        selectElement.innerHTML = `<option value="">Todos (${availableProducts.length})</option>`;
-        sortedOptions.forEach(value => {
-            const option = document.createElement('option');
-            option.value = value;
-            option.textContent = `${value} (${counts[value]})`;
-            if (value === currentValue) option.selected = true;
-            selectElement.appendChild(option);
-        });
-    }
-
-    function renderProductList(products) {
-        ui.productResultsList.innerHTML = '';
-        if (products.length === 0) {
-            ui.productResultsList.innerHTML = `<div class="empty-search-state"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg><p>No se encontraron productos con estos filtros.</p></div>`;
-            return;
-        }
-        products.forEach(product => {
-            const originalIndex = csvData.findIndex(p => p === product);
-            const card = document.createElement('div');
-            card.className = 'product-card';
-            card.dataset.index = originalIndex;
-
-            const imgUrl = product['imagen_url_web'];
-            let imgHTML = '<div class="card-no-thumb" style="font-size:0.7em; color:#999;">Sin foto</div>';
-            if (imgUrl && imgUrl.trim() !== "") {
-                imgHTML = `<img src="${imgUrl}" class="card-thumb" alt="mini" loading="lazy" onerror="this.parentNode.innerHTML='<div class=\'card-no-thumb\'>Error</div>'">`;
-            }
-
-            const typeTag = product['Desc_Familia_web'] ? `<span class="tag">${product['Desc_Familia_web']}</span>` : '';
-            const classTag = product['en_16165_anexo_c_deslizamiento_pendulo'] ? `<span class="tag">${product['en_16165_anexo_c_deslizamiento_pendulo']}</span>` : '';
-            let espesorTag = '';
-            if (product['Espesor(mm)']) {
-                const espesorCm = parseFloat(product['Espesor(mm)'].replace(',', '.'));
-                if (!isNaN(espesorCm)) {
-                    espesorTag = `<span class="tag">${(espesorCm * 10).toLocaleString('es-ES')} mm</span>`;
+                if (versionMatch && versionMatch[0]) {
+                    const versionElement = document.createElement('p');
+                    versionElement.textContent = versionMatch[0]; 
+                    versionElement.style.marginTop = '20px';
+                    versionElement.style.fontSize = '0.8em';
+                    versionElement.style.color = '#9ca3af';
+                    versionElement.style.fontWeight = '500';
+                    loginBox.appendChild(versionElement);
                 }
             }
-
-            card.innerHTML = `
-                <div class="card-thumb-container">${imgHTML}</div>
-                <div class="card-info">
-                    <h4 class="card-title">${product.MODELO || 'S/M'} - ${product.COLOR || 'S/C'}</h4>
-                    <p class="card-sub">${product.FORMATO || ''} | ${product.Acabado || ''}</p>
-                    <div class="card-tags">${typeTag}${classTag}${espesorTag}</div>
-                </div>`;
+        
+            // --- REFERENCIAS DOM ---
+            const ui = {
+                loginOverlay: document.getElementById('login-overlay'),
+                loginButton: document.getElementById('login-button'),
+                loginUsername: document.getElementById('login-username'),
+                loginPassword: document.getElementById('login-password'),
+                loginError: document.getElementById('login-error'),
+                userInfo: document.getElementById('user-info'),
+                userGreeting: document.getElementById('user-greeting'),
+                logoutLink: document.getElementById('logout-link'),
+                historyPanel: document.getElementById('history-panel'),
+                historyList: document.getElementById('history-list'),
+                viewSearch: document.getElementById('view-search'),
+                viewDetail: document.getElementById('view-detail'),
+                btnBackSearch: document.getElementById('btn-back-search'),
+                formulario: document.getElementById('formulario-prescripcion'),
+                statusMessage: document.getElementById('status-message'),
+                btnClearFilters: document.getElementById('btn-clear-filters'),
+                searchKeyword: document.getElementById('search-keyword'),
+                quickFilters: Array.from(document.querySelectorAll('.filtro-toggle-input')),
+                allSelectFilters: Array.from(document.querySelectorAll('select[data-csv-col]')).reduce((acc, select) => {
+                    acc[select.dataset.csvCol] = select;
+                    return acc;
+                }, {}),
+                productResultsList: document.getElementById('product-results-list'),
+                detailImage: document.getElementById('detail-product-image'),
+                detailImageContainer: document.getElementById('detail-image-container'),
+                output: document.getElementById('texto-generado'),
+                btnCopiar: document.getElementById('btn-copiar'),
+                btnDescargarTxt: document.getElementById('btn-descargar-txt'),
+                btnDescargarPdf: document.getElementById('btn-descargar-pdf'),
+                btnDescargarImagen: document.getElementById('btn-descargar-imagen'),
+                linkDAP: document.getElementById('link-dap'),
+                linkDOP: document.getElementById('link-dop'),
+                modalOverlay: document.getElementById('image-modal-overlay'),
+                modalImage: document.getElementById('modal-image'),
+                modalCloseBtn: document.getElementById('modal-close-btn')
+            };
+        
+            // --- ESTADO Y CONFIGURACIÓN ---
+            let csvData = [];
+            let selectedProductIndex = null;
+            let currentUser = null;
+            const MASTER_PASSWORD = 'pamesa2025';
             
-            card.addEventListener('click', () => goToDetailMode(originalIndex));
+            const revestimientoTypes = [
+                'Revestimiento pasta blanca no rectificada',
+                'Revestimiento pasta roja no rectificado',
+                'Revestimiento pasta blanca rectificada'
+            ];
             
-            const thumbContainer = card.querySelector('.card-thumb-container');
-            if (imgUrl && imgUrl.trim() !== "") {
-                thumbContainer.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    openModal(imgUrl);
+            // --- PLANTILLAS DE TEXTO (Mantenidas igual) ---
+            const pavimentoTemplate = `Suministro y ejecución de pavimento con <span class="resaltado">{tipo_material}</span>, de aspecto <span class="resaltado">{aspecto}</span>, colección <span class="resaltado">{coleccion}</span>, color <span class="resaltado">{color}</span> de <span class="resaltado">{fabricante}</span>. Conformado por prensado en seco, tratado en monococción a temperatura de 1200ºC.\n\nCerámica con dimensiones nominales de (Ancho x Alto x Espesor) <span class="resaltado">{dim_ancho}</span>x<span class="resaltado">{dim_alto}</span>x<span class="resaltado">{dim_espesor}</span> cm, desviación de longitud/anchura, rectitud de lados, ortogonalidad y planimetría inferior a <span class="resaltado">{desviacion}</span> (<span class="resaltado">{norma_dimensiones}</span>).\n\nDestonificado <span class="resaltado">{destonificado}</span>, con una absorción de agua muy baja <span class="resaltado">{absorcion_agua}</span> según ISO 10545-3. Clasificación de suelos según su resbaladicidad <span class="resaltado">{clase_resbaladicidad}</span> (CTE DBSUA), resistencia al deslizamiento <span class="resaltado">{valor_rd}</span> (UNE 41901:2017 EX). Módulo de rotura <span class="resaltado">{modulo_rotura}</span> (ISO-13006:2018 UNE-EN 14411:2016) y carga de rotura <span class="resaltado">{carga_rotura}</span> según ISO10545-4.\n\nPavimento de <span class="resaltado">{uso_transito}</span> conforme a la clasificación de baldosas según uso de la Guía de la Baldosa Cerámica (Documento reconocido DRB 01/11), resistente al choque térmico, al cuarteo, a la helada, a las manchas <span class="resaltado">{resistencia_manchas}</span>, según ISO 10545-14 y a los ataques químicos: <span class="resaltado">{resistencia_quimica}</span>, según ISO 10545-13.\n\nContribuye a los estándares de construcción sostenible y saludable (LEED, BREEAM, WELL) gracias a disponer de Declaración Ambiental de Producto propia (DAP), no ser una fuente emisora de sustancias peligrosas COV’s ni formaldehidos, así como por disponer de contenido de material reciclado >6%. Disponible marcado CE.\n\nCerámica recibida sobre recrecido cementoso sin calefacción radiante (no incluido), apto para la colocación en capa fina y tránsito previsto, con adhesivo de altas prestaciones con excelente adherencia y deformabilidad, <span class="resaltado">{adhesivo_nombre}</span> de <span class="resaltado">{adhesivo_fabricante}</span>, tipo <span class="resaltado">{adhesivo_tipo}</span>, según EN 12004, prescrito de acuerdo a las indicaciones de la UNE 138002 y rejuntadas con mortero de juntas cementoso de fraguado y endurecimiento rápido, <span class="resaltado">{mortero_nombre}</span> de <span class="resaltado">{mortero_fabricante}</span>, según EN 13888, para juntas de hasta <span class="resaltado">{junta_maxima}</span>mm.\n\nI/p.p medios auxiliares. Utilización de p/p de Crucetas Autonivelantes (no incluidas), formación de juntas perimetrales continuas, de anchura no menor de <span class="resaltado">{junta_perimetral}</span> mm, en los límites con paredes, pilares exentos y elevaciones de nivel y, en su caso, juntas de partición intermedias. Respetar juntas estructurales existentes en el soporte. Incluso limpieza y comprobación del grado de humedad de la base. Replanteo de niveles. Replanteo de la disposición de las baldosas y juntas de movimiento. Aplicación del adhesivo. Colocación de las crucetas. Colocación de las baldosas con llana dentada y doble encolado. Relleno, si procede, de las juntas de partición intermedias. Rejuntado. Eliminación y limpieza del material sobrante. Limpieza inicial del pavimento al finalizar la obra y protección hasta entrega de obra. Todo el proceso de colocación se efectuará según indicaciones de la dirección facultativa y norma UNE 138002.`;
+            
+            const revestimientoTemplate = `Suministro y ejecución de revestimiento con <span class="resaltado">{tipo_material}</span>, de aspecto <span class="resaltado">{aspecto}</span>, colección <span class="resaltado">{coleccion}</span>, color <span class="resaltado">{color}</span> de <span class="resaltado">{fabricante}</span>.\n\nCerámica con dimensiones nominales (Ancho x Largo x Espesor) <span class="resaltado">{dim_ancho}</span>x<span class="resaltado">{dim_alto}</span>x<span class="resaltado">{dim_espesor}</span> cm, desviación de longitud/anchura, rectitud de lados, ortogonalidad y planimetría inferior a <span class="resaltado">{desviacion}</span> (<span class="resaltado">{norma_dimensiones}</span>).\n\nDestonificado <span class="resaltado">{destonificado}</span> con una absorción de agua <span class="resaltado">{absorcion_agua}</span>, módulo de rotura <span class="resaltado">{modulo_rotura}</span> y fuerza de rotura <span class="resaltado">{carga_rotura}</span> (ISO-13006:2018 UNE-EN 14411:2016).\n\nContribuye a los estándares de construcción sostenible y saludable (LEED, BREEAM, WELL) gracias a disponer de Declaración Ambiental de Producto propia (DAP), no ser una fuente emisora de sustancias peligrosas COVs ni formaldehidos, así como por disponer de contenido de material reciclado >6%.\n\nColocación en capa fina, con adhesivo cementoso tecnológico avanzado, <span class="resaltado">{adhesivo_nombre}</span> de <span class="resaltado">{adhesivo_fabricante}</span>, tipo <span class="resaltado">{adhesivo_tipo}</span> según EN 12004, prescrito de acuerdo a las indicaciones de la UNE 138002 y rejuntadas con mortero de juntas cementoso de fraguado y endurecimiento rápido, <span class="resaltado">{mortero_nombre}</span> de <span class="resaltado">{mortero_fabricante}</span>, según EN 13888, para juntas de hasta <span class="resaltado">{junta_maxima}</span> mm.\n\nI/p.p medios auxiliares. Utilización de p/p de Crucetas Autonivelantes (no incluidas), formación de juntas perimetrales continuas, de anchura no menor de <span class="resaltado">{junta_perimetral}</span> mm, en los límites con paredes, pilares exentos y elevaciones de nivel y, en su caso, juntas de partición intermedias. Respetar juntas estructurales existentes en el soporte. Limpieza y comprobación del grado de humedad de la base. Replanteo de niveles. Replanteo de la disposición de las baldosas y juntas de movimiento. Aplicación del adhesivo. Colocación de las crucetas. Colocación de las baldosas con llana dentada y doble encolado. Relleno, si procede, de las juntas de partición intermedias. Rejuntado. Eliminación y limpieza del material sobrante. Limpieza inicial del pavimento al finalizar la obra y protección hasta entrega de obra. Todo el proceso de colocación se efectuará según indicaciones de la dirección facultativa y norma UNE 138002.`;
+            
+            const pavimentoPastaRojaTemplate = `Suministro y ejecución de pavimento con <span class="resaltado">{tipo_material}</span>, de aspecto <span class="resaltado">{aspecto}</span>, colección <span class="resaltado">{coleccion}</span>, color <span class="resaltado">{color}</span> de <span class="resaltado">{fabricante}</span>. Conformado por prensado en seco, tratado en monococción a temperatura de 1145ºC.\n\nCerámica con dimensiones nominales de (Ancho x Alto x Espesor) <span class="resaltado">{dim_ancho}</span>x<span class="resaltado">{dim_alto}</span>x<span class="resaltado">{dim_espesor}</span> cm, desviación de longitud/anchura, rectitud de lados, ortogonalidad y planimetría inferior a <span class="resaltado">{desviacion}</span> (<span class="resaltado">{norma_dimensiones}</span>).\n\nDestonificado <span class="resaltado">{destonificado}</span>, con una absorción de agua baja <span class="resaltado">{absorcion_agua}</span> según ISO 10545-3. Clasificación de suelos según su resbaladicidad <span class="resaltado">{clase_resbaladicidad}</span> (CTE DBSUA), resistencia al deslizamiento <span class="resaltado">{valor_rd}</span> (UNE 41901:2017 EX). Módulo de rotura <span class="resaltado">{modulo_rotura}</span> (ISO-13006:2018 UNE-EN 14411:2016) y carga de rotura <span class="resaltado">{carga_rotura}</span> según ISO10545-4.\n\nPavimento de <span class="resaltado">{uso_transito}</span> conforme a la clasificación de baldosas según uso de la Guía de la Baldosa Cerámica (Documento reconocido DRB 01/11), resistente al choque térmico, al cuarteo, a la helada, a las manchas <span class="resaltado">{resistencia_manchas}</span>, según ISO 10545-14 y a los ataques químicos: <span class="resaltado">{resistencia_quimica}</span>, según ISO 10545-13.\n\nContribuye a los estándares de construcción sostenible y saludable (LEED, BREEAM, WELL) gracias a disponer de Declaración Ambiental de Producto propia (DAP), no ser una fuente emisora de sustancias peligrosas COV’s ni formaldehidos, así como por disponer de contenido de material reciclado >6%. Disponible marcado CE.\n\nCerámica recibida sobre recrecido cementoso sin calefacción radiante (no incluido), apto para la colocación en capa fina y tránsito previsto, con adhesivo de altas prestaciones con excelente adherencia y deformabilidad, <span class="resaltado">{adhesivo_nombre}</span> de <span class="resaltado">{adhesivo_fabricante}</span>, tipo <span class="resaltado">{adhesivo_tipo}</span>, según EN 12004, prescrito de acuerdo a las indicaciones de la UNE 138002 y rejuntadas con mortero de juntas cementoso de fraguado y endurecimiento rápido, <span class="resaltado">{mortero_nombre}</span> de <span class="resaltado">{mortero_fabricante}</span>, según EN 13888, para juntas de hasta <span class="resaltado">{junta_maxima}</span>mm.\n\nI/p.p medios auxiliares. Utilización de p/p de Crucetas Autonivelantes (no incluidas), formación de juntas perimetrales continuas, de anchura no menor de <span class="resaltado">{junta_perimetral}</span> mm, en los límites con paredes, pilares exentos y elevaciones de nivel y, en su caso, juntas de partición intermedias. Respetar juntas estructurales existentes en el soporte. Incluso limpieza y comprobación del grado de humedad de la base. Replanteo de niveles. Replanteo de la disposición de las baldosas y juntas de movimiento. Aplicación del adhesivo. Colocación de las crucetas. Colocación de las baldosas con llana dentada y doble encolado. Relleno, si procede, de las juntas de partición intermedias. Rejuntado. Eliminación y limpieza del material sobrante. Limpieza inicial del pavimento al finalizar la obra y protección hasta entrega de obra. Todo el proceso de colocación se efectuará según indicaciones de la dirección facultativa y norma UNE 138002.`;
+        
+            // --- SISTEMA DE LOGIN ---
+            function checkLogin() {
+                const username = localStorage.getItem('currentUser');
+                if (username) {
+                    currentUser = username;
+                    ui.userGreeting.textContent = `Hola, ${currentUser}`;
+                    ui.userInfo.classList.remove('oculto');
+                    ui.loginOverlay.style.opacity = '0';
+                    setTimeout(() => ui.loginOverlay.classList.add('oculto'), 300);
+                    ui.historyPanel.classList.remove('oculto');
+                    loadDataAndInitializeApp();
+                    displayHistory();
+                } else {
+                    ui.loginOverlay.classList.remove('oculto');
+                    ui.loginOverlay.style.opacity = '1';
+                }
+            }
+        
+            function handleLogin() {
+                const username = ui.loginUsername.value.trim();
+                const password = ui.loginPassword.value.trim();
+                ui.loginError.textContent = '';
+                if (!username || !password) {
+                    ui.loginError.textContent = 'Usuario y contraseña son obligatorios.';
+                    return;
+                }
+                if (password === MASTER_PASSWORD) {
+                    localStorage.setItem('currentUser', username);
+                    checkLogin();
+                } else {
+                    ui.loginError.textContent = 'Contraseña incorrecta.';
+                    ui.loginPassword.value = '';
+                }
+            }
+        
+            function handleLogout() {
+                localStorage.removeItem('currentUser');
+                currentUser = null;
+                location.search = ''; 
+                location.reload();
+            }
+            
+            // --- HISTORIAL ---
+            function savePrescriptionToHistory() {
+                if (!currentUser || selectedProductIndex === null) return;
+                const product = csvData[selectedProductIndex];
+            
+                const historyKey = `history_${currentUser}`;
+                let history = JSON.parse(localStorage.getItem(historyKey)) || [];
+                
+                const newEntry = { 
+                    model: product.MODELO || 'S/M', 
+                    color: product.COLOR || 'S/C', 
+                    // --- ID CORRECTO ---
+                    id: product['Id.Articulo'] || 'N/A', 
+                    format: product.FORMATO || 'S/F', 
+                    finish: product.Acabado || 'S/A', 
+                    date: new Date().toLocaleString('es-ES') 
+                };
+                
+                // Evitamos duplicados consecutivos
+                if (history.length > 0 && history[0].id === newEntry.id) return;
+        
+                history.unshift(newEntry);
+                if (history.length > 20) { history = history.slice(0, 20); }
+                localStorage.setItem(historyKey, JSON.stringify(history));
+                displayHistory();
+            } // CORRECCION: Llave añadida
+        
+            function displayHistory() {
+                if (!currentUser) return;
+                const historyKey = `history_${currentUser}`;
+                const history = JSON.parse(localStorage.getItem(historyKey)) || [];
+                
+                ui.historyList.innerHTML = ''; 
+        
+                if (history.length === 0) {
+                    ui.historyList.innerHTML = `<p style="color: #999; text-align:center; padding:10px;">Aún no hay historial.</p>`;
+                    return;
+                }
+        
+                history.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'history-item';
+                    div.style.cursor = 'pointer'; 
+                    
+                    div.innerHTML = `
+                        <strong>${item.model} - ${item.color}</strong>
+                        <div class="details">${item.format} | ${item.finish}</div>
+                        <small>${item.date}</small>
+                    `;
+                    
+                    div.addEventListener('click', () => {
+                        const index = csvData.findIndex(p => p['Id.Articulo'] === item.id);
+                        if (index !== -1) {
+                            goToDetailMode(index);
+                        } else {
+                            alert('Este producto (ID: ' + item.id + ') ya no se encuentra en el catálogo cargado.');
+                        }
+                    });
+        
+                    ui.historyList.appendChild(div);
                 });
             }
-            ui.productResultsList.appendChild(card);
-        });
-    }
-    
-    function clearFilters() {
-         ui.searchKeyword.value = '';
-         ui.quickFilters.forEach(qf => qf.checked = false);
-         Object.values(ui.allSelectFilters).forEach(select => select.value = '');
-         updateFiltersAndProductList();
-         updateUrlState();
-    }
-
-    // --- CARGA DE DATOS (CSV) ---
-    async function loadDataAndInitializeApp() {
-        const csvFilePath = 'BD-CONTRAC-PRESTO-18-11-2025.csv'; 
-        ui.statusMessage.textContent = 'Cargando catálogo...';
         
-        // Skeleton Loader
-        let skeletonHTML = '';
-        for (let i = 0; i < 12; i++) {
-            skeletonHTML += `<div class="skeleton-card"><div class="skeleton-thumb"></div><div class="skeleton-info"><div class="skeleton-line title"></div><div class="skeleton-line"></div></div></div>`;
-        }
-        ui.productResultsList.innerHTML = skeletonHTML;
+            // --- NAVEGACIÓN ENTRE VISTAS ---
+            function goToSearchMode() {
+                ui.viewDetail.classList.remove('active-view');
+                ui.viewSearch.classList.add('active-view');
+                
+                // Limpiar URL al volver
+                const newUrl = new URL(window.location);
+                newUrl.searchParams.delete('producto');
+                window.history.pushState({ page: 'search' }, '', newUrl);
+            }
         
-        try {
-            const response = await fetch(csvFilePath);
-            if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
-            const csvText = await response.text();
-            csvData = parseCSV(csvText);
-            if (csvData.length === 0) throw new Error("CSV vacío o inválido.");
+            function goToDetailMode(productIndex) { // CORRECCION: Typo 'unction' arreglado
+                selectedProductIndex = productIndex;
+                const product = csvData[productIndex];
+                
+                if (product) {
+                    populateDetailView(product);
+                    ui.viewSearch.classList.remove('active-view');
+                    ui.viewDetail.classList.add('active-view');
+                    
+                    // Actualizar URL con ID
+                    const productId = product['Id.Articulo']; 
+                    if (productId) {
+                        const newUrl = new URL(window.location);
+                        newUrl.searchParams.set('producto', productId);
+                        window.history.pushState({ page: 'detail', id: productId }, '', newUrl);
+                    }
+                }
+            } // CORRECCION: Llave añadida
+        
+            // --- LOGICA DE DETALLE Y GENERACIÓN DE TEXTO ---
+            function populateDetailView(product) {
+                const productType = product['Desc_Familia_web'] || '';
+                document.getElementById('tipo_material').value = productType;
+                document.getElementById('coleccion').value = product['MODELO'] || '';
+                document.getElementById('color').value = product['COLOR'] || '';
+                document.getElementById('aspecto').value = [product['Efecto'], product['Acabado']].filter(Boolean).join(' / ');
+                document.getElementById('dim_ancho').value = product['Ancho'] ? product['Ancho'].replace(',', '.') : '';
+                document.getElementById('dim_alto').value = product['Alto'] ? product['Alto'].replace(',', '.') : '';
+                document.getElementById('dim_espesor').value = product['Espesor(mm)'] ? product['Espesor(mm)'].replace(',', '.') : '';
+                document.getElementById('destonificado').value = product['Variacion_cromatica'] || '';
+                document.getElementById('absorcion_agua').value = product['iso_10545_3_absorcion_agua'] || '';
+                document.getElementById('clase_resbaladicidad').value = product['en_16165_anexo_c_deslizamiento_pendulo'] || '';
+                document.getElementById('valor_rd').value = product['(Rd)'] || '';
+                document.getElementById('resistencia_manchas').value = product['Resistenci_ a_manchas'] || '';
+                document.getElementById('resistencia_quimica').value = product['Resistencia_a_ataques_químicos'] || '';
+                document.getElementById('modulo_rotura').value = product['iso_10545_4_resistencia_flexion'] || '';
+                document.getElementById('carga_rotura').value = product['iso_10545_4_fuerza_rotura'] || '';
+                document.getElementById('adhesivo_tipo').value = product['Adhesivo'] || 'C2';
+                
+                document.getElementById('junta_maxima').value = "3"; 
+                document.getElementById('junta_perimetral').value = "5";
+        
+                const imageUrl = product['imagen_url_web'];
+                if (imageUrl && imageUrl.trim() !== "") {
+                    ui.detailImage.src = imageUrl;
+                    ui.detailImageContainer.style.display = 'flex';
+                    ui.btnDescargarImagen.style.display = 'inline-flex';
+                } else {
+                    ui.detailImage.src = ''; 
+                    ui.detailImageContainer.style.display = 'none';
+                    ui.btnDescargarImagen.style.display = 'none';
+                }
+        
+                ui.linkDAP.href = product['declaracion_ambiental_producto'] || '#';
+                ui.linkDOP.href = product['declaracion_prestaciones'] || '#';
+                ui.linkDAP.style.display = product['declaracion_ambiental_producto'] ? 'inline-flex' : 'none';
+                ui.linkDOP.style.display = product['declaracion_prestaciones'] ? 'inline-flex' : 'none';
+                
+                generarTexto();
+            }
             
-            Object.values(ui.allSelectFilters).forEach(select => { select.disabled = false; });
+            function generarTexto() {
+                if (selectedProductIndex === null) return;
+                const values = {};
+                for (let el of ui.formulario.elements) { if (el.id) values[el.id] = el.value; }
+                
+                const selectedProductType = values['tipo_material'];
+                let activeTemplate;
+        
+                if (selectedProductType === 'Pavimento pasta roja no rectificado') {
+                    activeTemplate = pavimentoPastaRojaTemplate;
+                } else {
+                    activeTemplate = revestimientoTypes.includes(selectedProductType) ? revestimientoTemplate : pavimentoTemplate;
+                }
+                
+                let textoHTML = activeTemplate;
+                for (const key in values) {
+                    let valorSeguro = values[key] || '[DATO NO ESPECIFICADO]';
+                    if (typeof valorSeguro === 'string') {
+                        valorSeguro = valorSeguro.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    }
+                    textoHTML = textoHTML.replace(new RegExp(`{${key}}`, 'g'), valorSeguro);
+                }
+                ui.output.innerHTML = textoHTML;
+                
+                ui.output.classList.remove('texto-actualizado');
+                void ui.output.offsetWidth;
+                ui.output.classList.add('texto-actualizado');
+            }
+        
+            // --- URL STATE MANAGEMENT ---
+            function updateUrlState() {
+                const params = new URLSearchParams();
+                const keyword = ui.searchKeyword.value.trim();
+                if (keyword) params.set('q', keyword);
+        
+                ui.quickFilters.forEach(qf => {
+                    if (qf.checked) params.set(qf.id.replace('filtro-', ''), 'true');
+                });
+                
+                Object.values(ui.allSelectFilters).forEach(select => {
+                    if (select.value) params.set(select.id.replace('search-', ''), select.value);
+                });
+        
+                const newUrl = `${window.location.pathname}?${params.toString()}`;
+                history.pushState({ path: newUrl }, '', newUrl);
+            }
+        
+            function applyStateFromUrl() {
+                const params = new URLSearchParams(window.location.search);
+                ui.searchKeyword.value = params.get('q') || '';
+                ui.quickFilters.forEach(qf => {
+                    qf.checked = params.get(qf.id.replace('filtro-', '')) === 'true';
+                });
+                Object.values(ui.allSelectFilters).forEach(select => {
+                    const paramValue = params.get(select.id.replace('search-', ''));
+                    if (paramValue) select.value = paramValue;
+                });
+            }
+        
+            // --- LÓGICA DE BÚSQUEDA Y FILTRADO ---
+            function updateFiltersAndProductList() {
+                ui.productResultsList.classList.add('is-loading');
+        
+                setTimeout(() => {
+                    const keyword = ui.searchKeyword.value.trim().toUpperCase();
+                    let filteredProducts = csvData.filter(product => {
+                        const keywordMatch = !keyword || 
+                            (product['Serie'] && product['Serie'].toUpperCase().includes(keyword)) || 
+                            (product['MODELO'] && product['MODELO'].toUpperCase().includes(keyword)) || 
+                            (product['Efecto'] && product['Efecto'].toUpperCase().includes(keyword)) || 
+                            (product['COLOR'] && product['COLOR'].toUpperCase().includes(keyword));
+                        
+                        const is20mm = !document.getElementById('filtro-20mm').checked || (product['Espesor(mm)'] && product['Espesor(mm)'].startsWith('2'));
+                        const isExt = !document.getElementById('filtro-ext').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('EXT'));
+                        const isDup = !document.getElementById('filtro-dup').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('DUP'));
+                        
+                        return keywordMatch && is20mm && isExt && isDup;
+                    });
+        
+                    const activeSelectFilters = {};
+                    Object.keys(ui.allSelectFilters).forEach(key => { if (ui.allSelectFilters[key].value) activeSelectFilters[key] = ui.allSelectFilters[key].value; });
+                    
+                    if (Object.keys(activeSelectFilters).length > 0) {
+                        filteredProducts = filteredProducts.filter(product => Object.keys(activeSelectFilters).every(key => product[key] === activeSelectFilters[key]));
+                    }
+                    
+                    Object.keys(ui.allSelectFilters).forEach(currentKey => {
+                        const otherFilters = { ...activeSelectFilters };
+                        delete otherFilters[currentKey];
+                        const availableProducts = csvData.filter(product => {
+                            const keywordMatch = !keyword || (product['Serie'] && product['Serie'].toUpperCase().includes(keyword)) || (product['MODELO'] && product['MODELO'].toUpperCase().includes(keyword)) || (product['Efecto'] && product['Efecto'].toUpperCase().includes(keyword)) || (product['COLOR'] && product['COLOR'].toUpperCase().includes(keyword));
+                            const quickFiltersPass = (!document.getElementById('filtro-20mm').checked || (product['Espesor(mm)'] && product['Espesor(mm)'].startsWith('2'))) && (!document.getElementById('filtro-ext').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('EXT'))) && (!document.getElementById('filtro-dup').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('DUP')));
+                            const otherSelectsPass = Object.keys(otherFilters).every(key => product[key] === otherFilters[key]);
+                            return keywordMatch && quickFiltersPass && otherSelectsPass;
+                        });
+                        repopulateSelectWithOptions(ui.allSelectFilters[currentKey], availableProducts);
+                    });
+                    
+                    renderProductList(filteredProducts);
+                    ui.statusMessage.textContent = `${filteredProducts.length} productos encontrados`;
+                    const hasActiveFilters = ui.searchKeyword.value || ui.quickFilters.some(qf => qf.checked) || Object.values(ui.allSelectFilters).some(s => s.value);
+                    ui.btnClearFilters.classList.toggle('active', hasActiveFilters);
+        
+                    ui.productResultsList.classList.remove('is-loading');
+                }, 10);
+            }
+        
+            function repopulateSelectWithOptions(selectElement, availableProducts) {
+                const currentValue = selectElement.value;
+                const csvCol = selectElement.dataset.csvCol;
+                const counts = availableProducts.reduce((acc, product) => {
+                    const value = product[csvCol];
+                    if (value) acc[value] = (acc[value] || 0) + 1;
+                    return acc;
+                }, {});
+                const sortedOptions = Object.keys(counts).sort();
+                selectElement.innerHTML = `<option value="">Todos (${availableProducts.length})</option>`;
+                sortedOptions.forEach(value => {
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = `${value} (${counts[value]})`;
+                    if (value === currentValue) option.selected = true;
+                    selectElement.appendChild(option);
+                });
+            }
+        
+            function renderProductList(products) {
+                ui.productResultsList.innerHTML = '';
+                if (products.length === 0) {
+                    ui.productResultsList.innerHTML = `<div class="empty-search-state"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg><p>No se encontraron productos con estos filtros.</p></div>`;
+                    return;
+                }
+                products.forEach(product => {
+                    const originalIndex = csvData.findIndex(p => p === product);
+                    const card = document.createElement('div');
+                    card.className = 'product-card';
+                    card.dataset.index = originalIndex;
+        
+                    const imgUrl = product['imagen_url_web'];
+                    let imgHTML = '<div class="card-no-thumb" style="font-size:0.7em; color:#999;">Sin foto</div>';
+                    if (imgUrl && imgUrl.trim() !== "") {
+                        imgHTML = `<img src="${imgUrl}" class="card-thumb" alt="mini" loading="lazy" onerror="this.parentNode.innerHTML='<div class=\'card-no-thumb\'>Error</div>'">`;
+                    }
+        
+                    const typeTag = product['Desc_Familia_web'] ? `<span class="tag">${product['Desc_Familia_web']}</span>` : '';
+                    const classTag = product['en_16165_anexo_c_deslizamiento_pendulo'] ? `<span class="tag">${product['en_16165_anexo_c_deslizamiento_pendulo']}</span>` : '';
+                    let espesorTag = '';
+                    if (product['Espesor(mm)']) {
+                        const espesorCm = parseFloat(product['Espesor(mm)'].replace(',', '.'));
+                        if (!isNaN(espesorCm)) {
+                            espesorTag = `<span class="tag">${(espesorCm * 10).toLocaleString('es-ES')} mm</span>`;
+                        }
+                    }
+        
+                    card.innerHTML = `
+                        <div class="card-thumb-container">${imgHTML}</div>
+                        <div class="card-info">
+                            <h4 class="card-title">${product.MODELO || 'S/M'} - ${product.COLOR || 'S/C'}</h4>
+                            <p class="card-sub">${product.FORMATO || ''} | ${product.Acabado || ''}</p>
+                            <div class="card-tags">${typeTag}${classTag}${espesorTag}</div>
+                        </div>`;
+                    
+                    card.addEventListener('click', () => goToDetailMode(originalIndex));
+                    
+                    const thumbContainer = card.querySelector('.card-thumb-container');
+                    if (imgUrl && imgUrl.trim() !== "") {
+                        thumbContainer.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            openModal(imgUrl);
+                        });
+                    }
+                    ui.productResultsList.appendChild(card);
+                });
+            }
             
-            applyStateFromUrl(); 
-            updateFiltersAndProductList(); 
-        } catch (error) {
-            ui.statusMessage.textContent = `Error: No se pudo cargar el catálogo.`;
-            ui.productResultsList.innerHTML = `<div class="empty-search-state"><p>Error al cargar productos. Verifica el archivo CSV.</p></div>`;
-            console.error(error);
-        }
-        applyStateFromUrl(); 
-    updateFiltersAndProductList(); 
-
-    // --- NUEVO: Lógica de Deep Linking con Id.Articulo ---
-    const params = new URLSearchParams(window.location.search);
-    const urlProductId = params.get('producto');
-
-    if (urlProductId) {
-        // Buscamos en todo el CSV la fila cuyo 'Id.Articulo' coincida
-        const foundIndex = csvData.findIndex(p => p['Id.Articulo'] === urlProductId);
+            function clearFilters() {
+                 ui.searchKeyword.value = '';
+                 ui.quickFilters.forEach(qf => qf.checked = false);
+                 Object.values(ui.allSelectFilters).forEach(select => select.value = '');
+                 updateFiltersAndProductList();
+                 updateUrlState();
+            }
         
-        if (foundIndex !== -1) {
-            // Si lo encontramos, vamos directo al detalle
-            goToDetailMode(foundIndex);
-        } else {
-            console.log("El producto de la URL no existe en este catálogo.");
-        }
-    }
-
-    function parseCSV(text) {
-        const lines = text.trim().split(/\r\n|\n/);
-        if (lines.length < 2) return [];
+            // --- CARGA DE DATOS (CSV) ---
+            async function loadDataAndInitializeApp() {
+                const csvFilePath = 'BD-CONTRAC-PRESTO-18-11-2025.csv'; 
+                ui.statusMessage.textContent = 'Cargando catálogo...';
+                
+                let skeletonHTML = '';
+                for (let i = 0; i < 12; i++) {
+                    skeletonHTML += `<div class="skeleton-card"><div class="skeleton-thumb"></div><div class="skeleton-info"><div class="skeleton-line title"></div><div class="skeleton-line"></div></div></div>`;
+                }
+                ui.productResultsList.innerHTML = skeletonHTML;
+                
+                try {
+                    const response = await fetch(csvFilePath);
+                    if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+                    const csvText = await response.text();
+                    csvData = parseCSV(csvText);
+                    if (csvData.length === 0) throw new Error("CSV vacío o inválido.");
+                    
+                    Object.values(ui.allSelectFilters).forEach(select => { select.disabled = false; });
+                    
+                    applyStateFromUrl(); 
+                    updateFiltersAndProductList(); 
         
-        const headerLine = lines[0].replace(/^\uFEFF/, '');
-        const delimiter = (headerLine.match(/;/g) || []).length > (headerLine.match(/,/g) || []).length ? ';' : ',';
-        const headers = headerLine.split(delimiter).map(h => h.trim());
+                    // --- DEEP LINKING AL CARGAR ---
+                    const params = new URLSearchParams(window.location.search);
+                    const urlProductId = params.get('producto');
         
-        const data = [];
-        for (let i = 1; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (line === '') continue;
-            const values = line.split(delimiter);
-            if (values.length < headers.length) continue;
+                    if (urlProductId) {
+                        const foundIndex = csvData.findIndex(p => p['Id.Articulo'] === urlProductId);
+                        if (foundIndex !== -1) {
+                            goToDetailMode(foundIndex);
+                        } else {
+                            console.log("El producto de la URL no existe en este catálogo.");
+                        }
+                    }
+        
+                } catch (error) {
+                    ui.statusMessage.textContent = `Error: No se pudo cargar el catálogo.`;
+                    ui.productResultsList.innerHTML = `<div class="empty-search-state"><p>Error al cargar productos. Verifica el archivo CSV.</p></div>`;
+                    console.error(error);
+                }
+            } // CORRECCION: Llave añadida
+        
+            function parseCSV(text) {
+                const lines = text.trim().split(/\r\n|\n/);
+                if (lines.length < 2) return [];
+                
+                const headerLine = lines[0].replace(/^\uFEFF/, '');
+                const delimiter = (headerLine.match(/;/g) || []).length > (headerLine.match(/,/g) || []).length ? ';' : ',';
+                const headers = headerLine.split(delimiter).map(h => h.trim());
+                
+                const data = [];
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (line === '') continue;
+                    const values = line.split(delimiter);
+                    if (values.length < headers.length) continue;
+                    
+                    if (values.every(val => val.trim() === '')) continue;
+        
+                    const entry = {};
+                    headers.forEach((header, index) => {
+                        entry[header] = values[index] ? values[index].trim() : '';
+                    });
+        
+                    if (!entry['MODELO'] || entry['MODELO'] === "") continue;
+                    data.push(entry);
+                }
+                return data;
+            }
+        
+            // --- EXPORTACIÓN PDF (Mantenida igual) ---
+            async function generarPDF() {
+                if (selectedProductIndex === null) return;
+                ui.btnDescargarPdf.textContent = 'Generando...'; ui.btnDescargarPdf.disabled = true;
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF('p', 'mm', 'a4');
+                    const product = csvData[selectedProductIndex];
+                    const M_LEFT = 20, M_TOP = 20, WIDTH = 170;
+                    let y = M_TOP;
+                    
+                    const imgToBase64 = async (url) => {
+                        if (!url) return null;
+                        try {
+                            const res = await fetch(url); const blob = await res.blob();
+                            return new Promise((r) => { const reader = new FileReader(); reader.onloadend = () => r(reader.result); reader.readAsDataURL(blob); });
+                        } catch { return null; }
+                    };
+                    
+                    const logo = await imgToBase64('LOGO-PAMESA.jpg');
+                    if (logo) doc.addImage(logo, 'JPEG', M_LEFT, 10, 50, 10);
+                    
+                    doc.setFont('helvetica', 'bold'); doc.setFontSize(12); 
+                    doc.text('Prescripción Técnica', 210 - 20, 16, { align: 'right' });
+                    y = 25; 
+                    doc.setDrawColor(206, 23, 25); doc.line(M_LEFT, y, 210-20, y); y += 10;
+                    doc.setFontSize(16); doc.setTextColor(206, 23, 25); 
+                    doc.text(`${product.MODELO} - ${product.COLOR}`, M_LEFT, y); y += 10;
+                    
+                    const prodImg = await imgToBase64(ui.detailImage.src);
+                    let textX = M_LEFT; let textW = WIDTH;
+                    if (prodImg) { 
+                        doc.addImage(prodImg, 'JPEG', M_LEFT, y, 60, 60); 
+                        textX = M_LEFT + 65; textW = WIDTH - 65; 
+                    }
+                    
+                    const rawHTML = ui.output.innerHTML;
+                    const cleanText = rawHTML.replace(/<br\s*\/?>/gi, '\n').replace(/&nbsp;/g, ' ');
+                    const paragraphs = cleanText.split('\n');
+                    doc.setFontSize(9); doc.setTextColor(0,0,0); 
+                    let currentY = y;
+                    
+                    paragraphs.forEach(para => {
+                        if (!para.trim()) { currentY += 4; return; }
+                        if (prodImg && currentY > (y + 65)) { textX = M_LEFT; textW = WIDTH; }
+                        
+                        const parts = para.split(/(<span class="resaltado">.*?<\/span>)/g);
+                        let lineWidth = 0; 
+                        
+                        parts.forEach(part => {
+                            const isBold = part.startsWith('<span'); 
+                            const content = isBold ? part.replace(/<[^>]+>/g, '') : part;
+                            
+                            const words = content.split(' ');
+                            words.forEach(w => {
+                                if(!w) return;
+                                const word = w + ' ';
+                                doc.setFont('helvetica', isBold ? 'bold' : 'normal'); 
+                                doc.setTextColor(isBold ? '#ce1719' : '#333333');
+                                
+                                const wWidth = doc.getStringUnitWidth(word) * 9 / doc.internal.scaleFactor;
+                                if (lineWidth + wWidth > textW) {
+                                    currentY += 4; lineWidth = 0;
+                                    if (prodImg && currentY > (y + 65)) { textX = M_LEFT; textW = WIDTH; }
+                                    if (currentY > 280) { doc.addPage(); currentY = 20; textX = M_LEFT; textW = WIDTH; }
+                                }
+                                doc.text(word, textX + lineWidth, currentY); 
+                                lineWidth += wWidth;
+                            });
+                        });
+                        currentY += 5;
+                    });
+                    
+                    const pages = doc.internal.getNumberOfPages();
+                    for(let i=1; i<=pages; i++) { 
+                        doc.setPage(i); doc.setFontSize(8); doc.setTextColor(150); 
+                        doc.text(`Pág ${i}/${pages} | ${new Date().toLocaleDateString()}`, 105, 290, { align: 'center' }); 
+                    }
+                    
+                    doc.save(`Prescripcion_${product.MODELO}_${product.COLOR}.pdf`);
+                } catch (e) { console.error(e); alert('Error al generar PDF'); } 
+                finally { ui.btnDescargarPdf.textContent = 'PDF'; ui.btnDescargarPdf.disabled = false; }
+            }
+        
+            // --- EVENTOS Y LISTENERS ---
+            ui.loginButton.addEventListener('click', handleLogin);
+            [ui.loginUsername, ui.loginPassword].forEach(el => el.addEventListener('keyup', (e) => { if (e.key === 'Enter') handleLogin(); }));
+            ui.logoutLink.addEventListener('click', (e) => { e.preventDefault(); handleLogout(); });
+        
+            ui.btnBackSearch.addEventListener('click', goToSearchMode);
+            ui.btnClearFilters.addEventListener('click', clearFilters);
             
-            // Validación de fila vacía
-            if (values.every(val => val.trim() === '')) continue;
-
-            const entry = {};
-            headers.forEach((header, index) => {
-                entry[header] = values[index] ? values[index].trim() : '';
+            // Filtros en tiempo real
+            const updateAll = () => { updateFiltersAndProductList(); updateUrlState(); };
+            ui.searchKeyword.addEventListener('input', updateAll);
+            ui.quickFilters.forEach(el => el.addEventListener('change', updateAll));
+            Object.values(ui.allSelectFilters).forEach(el => el.addEventListener('change', updateAll));
+        
+            // Actualización de texto
+            Array.from(ui.formulario.elements).forEach(el => el.addEventListener('input', generarTexto));
+            
+            // Botones de acción
+            ui.btnCopiar.addEventListener('click', () => {
+                savePrescriptionToHistory();
+                navigator.clipboard.writeText(ui.output.textContent);
+                const prev = ui.btnCopiar.textContent;
+                ui.btnCopiar.textContent = '¡Copiado!';
+                ui.btnCopiar.style.backgroundColor = '#10b981'; // Green
+                setTimeout(() => { ui.btnCopiar.textContent = prev; ui.btnCopiar.style.backgroundColor = ''; }, 1500);
             });
-
-            if (!entry['MODELO'] || entry['MODELO'] === "") continue;
-            data.push(entry);
-        }
-        return data;
-    }
-
-    // --- EXPORTACIÓN ---
-    async function generarPDF() {
-        if (selectedProductIndex === null) return;
-        ui.btnDescargarPdf.textContent = 'Generando...'; ui.btnDescargarPdf.disabled = true;
-        try {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('p', 'mm', 'a4');
-            const product = csvData[selectedProductIndex];
-            const M_LEFT = 20, M_TOP = 20, WIDTH = 170;
-            let y = M_TOP;
-            
-            const imgToBase64 = async (url) => {
-                if (!url) return null;
+        
+            ui.btnDescargarTxt.addEventListener('click', () => {
+                savePrescriptionToHistory();
+                const blob = new Blob([ui.output.textContent], {type: 'text/plain'});
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob); a.download = 'prescripcion.txt'; a.click();
+            });
+        
+            ui.btnDescargarPdf.addEventListener('click', () => {
+                savePrescriptionToHistory();
+                generarPDF();
+            });
+        
+            ui.btnDescargarImagen.addEventListener('click', async () => {
+                const url = ui.detailImage.src; if(!url) return;
                 try {
                     const res = await fetch(url); const blob = await res.blob();
-                    return new Promise((r) => { const reader = new FileReader(); reader.onloadend = () => r(reader.result); reader.readAsDataURL(blob); });
-                } catch { return null; }
-            };
-            
-            const logo = await imgToBase64('LOGO-PAMESA.jpg');
-            if (logo) doc.addImage(logo, 'JPEG', M_LEFT, 10, 50, 10);
-            
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(12); 
-            doc.text('Prescripción Técnica', 210 - 20, 16, { align: 'right' });
-            y = 25; 
-            doc.setDrawColor(206, 23, 25); doc.line(M_LEFT, y, 210-20, y); y += 10;
-            doc.setFontSize(16); doc.setTextColor(206, 23, 25); 
-            doc.text(`${product.MODELO} - ${product.COLOR}`, M_LEFT, y); y += 10;
-            
-            const prodImg = await imgToBase64(ui.detailImage.src);
-            let textX = M_LEFT; let textW = WIDTH;
-            if (prodImg) { 
-                doc.addImage(prodImg, 'JPEG', M_LEFT, y, 60, 60); 
-                textX = M_LEFT + 65; textW = WIDTH - 65; 
-            }
-            
-            const rawHTML = ui.output.innerHTML;
-            const cleanText = rawHTML.replace(/<br\s*\/?>/gi, '\n').replace(/&nbsp;/g, ' ');
-            const paragraphs = cleanText.split('\n');
-            doc.setFontSize(9); doc.setTextColor(0,0,0); 
-            let currentY = y;
-            
-            paragraphs.forEach(para => {
-                if (!para.trim()) { currentY += 4; return; }
-                if (prodImg && currentY > (y + 65)) { textX = M_LEFT; textW = WIDTH; }
-                
-                const parts = para.split(/(<span class="resaltado">.*?<\/span>)/g);
-                let lineWidth = 0; 
-                
-                parts.forEach(part => {
-                    const isBold = part.startsWith('<span'); 
-                    const content = isBold ? part.replace(/<[^>]+>/g, '') : part;
-                    
-                    const words = content.split(' ');
-                    words.forEach(w => {
-                        if(!w) return;
-                        const word = w + ' ';
-                        doc.setFont('helvetica', isBold ? 'bold' : 'normal'); 
-                        doc.setTextColor(isBold ? '#ce1719' : '#333333');
-                        
-                        const wWidth = doc.getStringUnitWidth(word) * 9 / doc.internal.scaleFactor;
-                        if (lineWidth + wWidth > textW) {
-                            currentY += 4; lineWidth = 0;
-                            if (prodImg && currentY > (y + 65)) { textX = M_LEFT; textW = WIDTH; }
-                            if (currentY > 280) { doc.addPage(); currentY = 20; textX = M_LEFT; textW = WIDTH; }
-                        }
-                        doc.text(word, textX + lineWidth, currentY); 
-                        lineWidth += wWidth;
-                    });
-                });
-                currentY += 5;
+                    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+                    a.download = 'imagen_producto.jpg'; a.click();
+                } catch { window.open(url, '_blank'); }
             });
+        
+            // Modal
+            function openModal(url) { if(url) { ui.modalImage.src = url; ui.modalOverlay.classList.add('visible'); } }
+            function closeModal() { ui.modalOverlay.classList.remove('visible'); setTimeout(() => ui.modalImage.src='', 300); }
             
-            const pages = doc.internal.getNumberOfPages();
-            for(let i=1; i<=pages; i++) { 
-                doc.setPage(i); doc.setFontSize(8); doc.setTextColor(150); 
-                doc.text(`Pág ${i}/${pages} | ${new Date().toLocaleDateString()}`, 105, 290, { align: 'center' }); 
-            }
-            
-            doc.save(`Prescripcion_${product.MODELO}_${product.COLOR}.pdf`);
-        } catch (e) { console.error(e); alert('Error al generar PDF'); } 
-        finally { ui.btnDescargarPdf.textContent = 'PDF'; ui.btnDescargarPdf.disabled = false; }
-    }
-
-    // --- EVENTOS Y LISTENERS ---
-    ui.loginButton.addEventListener('click', handleLogin);
-    [ui.loginUsername, ui.loginPassword].forEach(el => el.addEventListener('keyup', (e) => { if (e.key === 'Enter') handleLogin(); }));
-    ui.logoutLink.addEventListener('click', (e) => { e.preventDefault(); handleLogout(); });
-
-    ui.btnBackSearch.addEventListener('click', goToSearchMode);
-    ui.btnClearFilters.addEventListener('click', clearFilters);
-    
-    // Filtros en tiempo real
-    const updateAll = () => { updateFiltersAndProductList(); updateUrlState(); };
-    ui.searchKeyword.addEventListener('input', updateAll);
-    ui.quickFilters.forEach(el => el.addEventListener('change', updateAll));
-    Object.values(ui.allSelectFilters).forEach(el => el.addEventListener('change', updateAll));
-
-    // Actualización de texto
-    Array.from(ui.formulario.elements).forEach(el => el.addEventListener('input', generarTexto));
-    
-    // Botones de acción
-    ui.btnCopiar.addEventListener('click', () => {
-        savePrescriptionToHistory();
-        navigator.clipboard.writeText(ui.output.textContent);
-        const prev = ui.btnCopiar.textContent;
-        ui.btnCopiar.textContent = '¡Copiado!';
-        ui.btnCopiar.style.backgroundColor = '#10b981'; // Green
-        setTimeout(() => { ui.btnCopiar.textContent = prev; ui.btnCopiar.style.backgroundColor = ''; }, 1500);
-    });
-
-    ui.btnDescargarTxt.addEventListener('click', () => {
-        savePrescriptionToHistory();
-        const blob = new Blob([ui.output.textContent], {type: 'text/plain'});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob); a.download = 'prescripcion.txt'; a.click();
-    });
-
-    ui.btnDescargarPdf.addEventListener('click', () => {
-        savePrescriptionToHistory();
-        generarPDF();
-    });
-
-    ui.btnDescargarImagen.addEventListener('click', async () => {
-        const url = ui.detailImage.src; if(!url) return;
-        try {
-            const res = await fetch(url); const blob = await res.blob();
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-            a.download = 'imagen_producto.jpg'; a.click();
-        } catch { window.open(url, '_blank'); }
-    });
-
-    // Modal
-    function openModal(url) { if(url) { ui.modalImage.src = url; ui.modalOverlay.classList.add('visible'); } }
-    function closeModal() { ui.modalOverlay.classList.remove('visible'); setTimeout(() => ui.modalImage.src='', 300); }
-    
-    ui.detailImageContainer.addEventListener('click', () => { if(ui.detailImage.src) openModal(ui.detailImage.src); });
-    ui.modalCloseBtn.addEventListener('click', closeModal);
-    ui.modalOverlay.addEventListener('click', (e) => { if (e.target === ui.modalOverlay) closeModal(); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
-
-    // Copia manual
-    document.getElementById('texto-generado').addEventListener('copy', () => {
-        savePrescriptionToHistory();
-    });
-
-    // Inicialización
-    checkLogin();
-    ui.viewSearch.classList.add('active-view');
-});
-
-window.addEventListener('popstate', (event) => {
-    const params = new URLSearchParams(window.location.search);
-    const urlProductId = params.get('producto');
-
-    if (urlProductId) {
-        const foundIndex = csvData.findIndex(p => p['Id.Articulo'] === urlProductId);
-        if (foundIndex !== -1) {
-            selectedProductIndex = foundIndex;
-            populateDetailView(csvData[foundIndex]);
-            ui.viewSearch.classList.remove('active-view');
-            ui.viewDetail.classList.add('active-view');
-        }
-    } else {
-        // Si no hay ID, volvemos a la búsqueda
-        ui.viewDetail.classList.remove('active-view');
-        ui.viewSearch.classList.add('active-view');
-    }
-});
-
-</script>
+            ui.detailImageContainer.addEventListener('click', () => { if(ui.detailImage.src) openModal(ui.detailImage.src); });
+            ui.modalCloseBtn.addEventListener('click', closeModal);
+            ui.modalOverlay.addEventListener('click', (e) => { if (e.target === ui.modalOverlay) closeModal(); });
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+        
+            document.getElementById('texto-generado').addEventListener('copy', () => {
+                savePrescriptionToHistory();
+            });
+        
+            // BOTONES NAVEGADOR (ATRAS/ADELANTE)
+            window.addEventListener('popstate', (event) => {
+                const params = new URLSearchParams(window.location.search);
+                const urlProductId = params.get('producto');
+        
+                if (urlProductId) {
+                    const foundIndex = csvData.findIndex(p => p['Id.Articulo'] === urlProductId);
+                    if (foundIndex !== -1) {
+                        selectedProductIndex = foundIndex;
+                        populateDetailView(csvData[foundIndex]);
+                        ui.viewSearch.classList.remove('active-view');
+                        ui.viewDetail.classList.add('active-view');
+                    }
+                } else {
+                    ui.viewDetail.classList.remove('active-view');
+                    ui.viewSearch.classList.add('active-view');
+                }
+            });
+        
+            // Inicialización
+            checkLogin();
+            ui.viewSearch.classList.add('active-view');
+        });
+        </script>
 </body>
 </html>
