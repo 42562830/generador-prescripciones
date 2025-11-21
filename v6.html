@@ -1335,13 +1335,15 @@
                 });
             }
         
-            // --- LÓGICA DE BÚSQUEDA Y FILTRADO ---
+            // --- LÓGICA DE BÚSQUEDA Y FILTRADO (FUSIONADA V4 + V6) ---
             function updateFiltersAndProductList() {
                 ui.productResultsList.classList.add('is-loading');
         
                 setTimeout(() => {
                     const keyword = ui.searchKeyword.value.trim().toUpperCase();
                     
+                    // 1. FILTRADO PRINCIPAL (Para la rejilla de resultados)
+                    // Filtra los datos globales basándose en TODAS las condiciones actuales
                     filteredData = csvData.filter(product => {
                         const keywordMatch = !keyword || 
                             (product['Serie'] && product['Serie'].toUpperCase().includes(keyword)) || 
@@ -1353,7 +1355,7 @@
                         const isExt = !document.getElementById('filtro-ext').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('EXT'));
                         const isDup = !document.getElementById('filtro-dup').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('DUP'));
                         
-                        const activeSelects = {};
+                        // Comprobar todos los selects activos
                         let selectsPass = true;
                         Object.keys(ui.allSelectFilters).forEach(key => {
                             const val = ui.allSelectFilters[key].value;
@@ -1362,8 +1364,45 @@
                         
                         return keywordMatch && is20mm && isExt && isDup && selectsPass;
                     });
+
+                    // 2. ACTUALIZACIÓN DINÁMICA DE FILTROS (Lógica traída de v4.html)
+                    // Esto recalcula qué opciones deben aparecer en cada desplegable
+                    // basándose en lo que se ha seleccionado en los OTROS desplegables.
                     
-                    // Ordenación
+                    // Recopilar filtros activos
+                    const activeSelectFilters = {};
+                    Object.keys(ui.allSelectFilters).forEach(key => { 
+                        if (ui.allSelectFilters[key].value) activeSelectFilters[key] = ui.allSelectFilters[key].value; 
+                    });
+
+                    // Iterar sobre cada desplegable para actualizar sus opciones
+                    Object.keys(ui.allSelectFilters).forEach(currentKey => {
+                        // Crear conjunto de filtros excluyendo el actual (para ver qué opciones quedan disponibles)
+                        const otherFilters = { ...activeSelectFilters };
+                        delete otherFilters[currentKey]; // Importante: no nos filtramos a nosotros mismos para no perder opciones al seleccionar
+
+                        const availableProducts = csvData.filter(product => {
+                            const keywordMatch = !keyword || 
+                                (product['Serie'] && product['Serie'].toUpperCase().includes(keyword)) || 
+                                (product['MODELO'] && product['MODELO'].toUpperCase().includes(keyword)) || 
+                                (product['Efecto'] && product['Efecto'].toUpperCase().includes(keyword)) || 
+                                (product['COLOR'] && product['COLOR'].toUpperCase().includes(keyword));
+                            
+                            const quickFiltersPass = 
+                                (!document.getElementById('filtro-20mm').checked || (product['Espesor(mm)'] && product['Espesor(mm)'].startsWith('2'))) && 
+                                (!document.getElementById('filtro-ext').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('EXT'))) && 
+                                (!document.getElementById('filtro-dup').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('DUP')));
+                            
+                            const otherSelectsPass = Object.keys(otherFilters).every(key => product[key] === otherFilters[key]);
+                            
+                            return keywordMatch && quickFiltersPass && otherSelectsPass;
+                        });
+
+                        // Actualizar las opciones de ESTE select específico
+                        repopulateSelectWithOptions(ui.allSelectFilters[currentKey], availableProducts);
+                    });
+                    
+                    // 3. ORDENACIÓN (Mantenido de v6.html)
                     const sortMode = ui.sortSelect.value;
                     if (sortMode !== 'relevancia') {
                         filteredData.sort((a, b) => {
@@ -1380,6 +1419,7 @@
                         });
                     }
                     
+                    // 4. RENDERIZADO
                     renderProductList(filteredData);
                     ui.statusMessage.textContent = `${filteredData.length} productos encontrados`;
                     const hasActiveFilters = ui.searchKeyword.value || ui.quickFilters.some(qf => qf.checked) || Object.values(ui.allSelectFilters).some(s => s.value);
