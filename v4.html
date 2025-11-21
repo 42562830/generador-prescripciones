@@ -1309,7 +1309,7 @@
                 return data;
             }
         
-            // --- EXPORTACIÓN PDF (Mantenida igual) ---
+            // --- EXPORTACIÓN PDF (Prescripción Técnica) CORREGIDA ---
             async function generarPDF() {
                 if (selectedProductIndex === null) return;
                 ui.btnDescargarPdf.textContent = 'Generando...'; ui.btnDescargarPdf.disabled = true;
@@ -1328,8 +1328,15 @@
                         } catch { return null; }
                     };
                     
+                    // --- ARREGLO LOGO ---
                     const logo = await imgToBase64('LOGO-PAMESA.jpg');
-                    if (logo) doc.addImage(logo, 'JPEG', M_LEFT, 10, 50, 10);
+                    if (logo) {
+                        const imgProps = doc.getImageProperties(logo);
+                        const logoWidth = 50; 
+                        // Calculamos altura proporcional
+                        const logoHeight = (imgProps.height * logoWidth) / imgProps.width;
+                        doc.addImage(logo, 'JPEG', M_LEFT, 10, logoWidth, logoHeight);
+                    }
                     
                     doc.setFont('helvetica', 'bold'); doc.setFontSize(12); 
                     doc.text('Prescripción Técnica', 210 - 20, 16, { align: 'right' });
@@ -1341,6 +1348,8 @@
                     const prodImg = await imgToBase64(ui.detailImage.src);
                     let textX = M_LEFT; let textW = WIDTH;
                     if (prodImg) { 
+                        // Ajustamos la imagen del producto también para que no se deforme (opcional, pero recomendado)
+                        // Aquí lo mantenemos cuadrado 60x60 como estaba, o puedes aplicar la misma lógica
                         doc.addImage(prodImg, 'JPEG', M_LEFT, y, 60, 60); 
                         textX = M_LEFT + 65; textW = WIDTH - 65; 
                     }
@@ -1423,7 +1432,7 @@
                 input.addEventListener('change', calculateBudget); // Para el checkbox
             });
 
-            // --- GENERACIÓN PDF PRESUPUESTO ---
+            // --- GENERACIÓN PDF PRESUPUESTO CORREGIDO ---
             ui.btnGenerarPresupuesto.addEventListener('click', async () => {
                 if (selectedProductIndex === null) return;
                 
@@ -1461,7 +1470,7 @@
                     const M_LEFT = 20;
                     let y = 20;
 
-                    // 1. Cabecera
+                    // 1. Cabecera y Logo (CORREGIDO PROPORCIÓN)
                     const imgToBase64 = async (url) => {
                         try {
                             const res = await fetch(url); const blob = await res.blob();
@@ -1469,7 +1478,16 @@
                         } catch { return null; }
                     };
                     const logo = await imgToBase64('LOGO-PAMESA.jpg');
-                    if (logo) doc.addImage(logo, 'JPEG', M_LEFT, 10, 50, 10); // Ajustar tamaño según logo real
+                    
+                    if (logo) {
+                        // Obtenemos las propiedades reales de la imagen para no deformarla
+                        const imgProps = doc.getImageProperties(logo);
+                        const logoWidth = 50; // Ancho fijo que queremos
+                        // Calculamos la altura proporcional: (AltoOriginal * AnchoDeseado) / AnchoOriginal
+                        const logoHeight = (imgProps.height * logoWidth) / imgProps.width;
+                        
+                        doc.addImage(logo, 'JPEG', M_LEFT, 10, logoWidth, logoHeight);
+                    }
 
                     doc.setFont('helvetica', 'bold');
                     doc.setFontSize(18);
@@ -1567,18 +1585,49 @@
                     doc.text('TOTAL:', xLabel, y, { align: 'right' });
                     doc.text(`${total.toLocaleString('es-ES', {minimumFractionDigits: 2})} €`, xValue, y, { align: 'right' });
 
+                    // --- NUEVO: NOTAS IMPORTANTES (ORIENTATIVO + TRANSPORTE) ---
+                    y += 15;
+                    doc.setFontSize(8);
+                    doc.setTextColor(0);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('CONDICIONES:', M_LEFT, y);
+                    
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(60);
+                    // Añadimos las notas que pediste
+                    const notas = [
+                        "- Presupuesto orientativo sujeto a verificación técnica.",
+                        "- Únicamente material. No incluye transporte a obra, descarga ni colocación.",
+                        "- Material puesto en fábrica (EXW)."
+                    ];
+                    
+                    let notaY = y + 5;
+                    notas.forEach(nota => {
+                        doc.text(nota, M_LEFT, notaY);
+                        notaY += 4;
+                    });
+
                     // 6. Imagen del producto (Miniatura)
+                    // La movemos un poco para que no choque con las notas
                     if (ui.detailImage.src) {
                         const prodImg = await imgToBase64(ui.detailImage.src);
                         if (prodImg) {
-                            doc.addImage(prodImg, 'JPEG', M_LEFT, y - 20, 30, 30);
+                            // Ponemos la imagen a la izquierda de los totales, pero cuidando el espacio
+                            doc.addImage(prodImg, 'JPEG', M_LEFT, y - 35, 25, 25);
                         }
                     }
 
-                    // 7. Footer Legal
+                    // 7. Footer Legal (CORREGIDO CORTE DE TEXTO)
                     doc.setFontSize(7);
                     doc.setTextColor(150);
-                    doc.text('Este documento es un presupuesto estimativo generado automáticamente. No tiene valor contractual definitivo hasta su validación por el departamento comercial. Precios sujetos a cambios sin previo aviso. Pamesa Cerámica.', 105, 280, { align: 'center' });
+                    
+                    const textoLegal = 'Este documento es un presupuesto estimativo generado automáticamente. No tiene valor contractual definitivo hasta su validación por el departamento comercial. Precios sujetos a cambios sin previo aviso. Pamesa Cerámica.';
+                    
+                    // Esta función divide el texto para que quepa en 170mm de ancho
+                    const textoLegalDividido = doc.splitTextToSize(textoLegal, 170);
+                    
+                    // Imprimimos el texto dividido centrado
+                    doc.text(textoLegalDividido, 105, 280, { align: 'center' });
 
                     // Guardar
                     const safeName = (cliente || 'Presupuesto').replace(/[^a-z0-9]/gi, '_');
