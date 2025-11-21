@@ -1514,7 +1514,7 @@
                     doc.text(`${product.MODELO} - ${product.COLOR}`, M_LEFT + 2, y);
                     doc.setFont('helvetica', 'normal');
                     doc.setFontSize(8);
-                    doc.text(`${product.FORMATO} | ${product.Acabado}`, M_LEFT + 2, y + 4);
+                    doc.text(`Ref: ${product['Id.Articulo']} | ${product.FORMATO} | ${product.Acabado}`, M_LEFT + 2, y + 4);
                     
                     if (merma > 0) {
                         doc.setTextColor(100);
