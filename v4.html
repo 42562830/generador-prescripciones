@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Prescripciones de Obra v4.0 - Pamesa Cerámica</title>
+    
+    <!-- LIBRERÍAS EXTERNAS -->
+    <!-- Fuente Montserrat -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Fuente Monoespaciada para el texto técnico -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Librería jsPDF para generar el PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <style>
+        :root {
+            /* --- PALETA DE COLORES REFINADA --- */
+            --color-principal: #ce1719;
+            --color-principal-hover: #b51517;
+            --color-secundario: #4b5563; /* Gris oscuro moderno */
+            --color-secundario-hover: #374151;
+            --color-blanco: #ffffff;
+            --color-texto-principal: #1f2937; /* Casi negro, más suave */
+            --color-texto-secundario: #6b7280; /* Gris medio */
+            --color-fondo: #f3f4f6; /* Gris muy claro azulado (SaaS look) */
+            --color-borde-suave: #e5e7eb;
+            --color-tag-bg: #f3f4f6;
+            --color-tag-text: #374151;
+            
+            /* --- TIPOGRAFÍA --- */
+            --font-main: 'Montserrat', sans-serif;
+            --font-tech: 'Roboto Mono', monospace;
+            
+            /* --- UI ELEMENTS --- */
+            --radio-borde: 12px; /* Bordes más redondeados y modernos */
+            --sombra-card: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+            --sombra-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --sombra-modal: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            --max-width-container: 1800px;
+        }
+
+        /* --- ESTILOS BASE Y RESET --- */
+        * { box-sizing: border-box; }
+        html { height: 100%; }
+        body {
+            font-family: var(--font-main);
+            background-color: var(--color-fondo);
+            color: var(--color-texto-principal);
+            margin: 0;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* --- PANTALLA DE LOGIN --- */
+        @keyframes zoomInBackground {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+        @keyframes fadeInFromBottom {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        
+        #login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            z-index: 1000; display: flex; align-items: center; justify-content: center;
+            transition: opacity 0.3s ease; overflow: hidden;
+        }
+        #login-overlay::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('image-index.jpg');
+            background-size: cover; background-position: center center; background-repeat: no-repeat;
+            z-index: -1; animation: zoomInBackground 20s ease-in-out infinite alternate;
+        }
+        #login-box {
+            background-color: rgba(255, 255, 255, 0.98);
+            padding: 40px 50px;
+            border-radius: var(--radio-borde);
+            box-shadow: var(--sombra-modal);
+            text-align: center; width: 100%; max-width: 420px;
+            border-top: 4px solid var(--color-principal);
+            animation: fadeInFromBottom 0.5s ease-out;
+        }
+        #login-logo { max-width: 200px; margin-bottom: 24px; }
+        #login-box h2 { font-size: 1.5em; color: #000; font-weight: 600; margin: 0 0 8px 0; }
+        #login-box p { color: var(--color-texto-secundario); margin-bottom: 32px; }
+        #login-button { width: 100%; margin-top: 16px; }
+        #login-error { color: var(--color-principal); font-weight: 600; font-size: 0.9em; height: 20px; margin-top: 16px; }
+
+        /* --- CABECERA --- */
+        .header-corporativo {
+            background-color: var(--color-blanco);
+            padding: 16px 32px;
+            border-bottom: 1px solid var(--color-borde-suave);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            z-index: 10; flex-shrink: 0;
+        }
+        .header-container { max-width: var(--max-width-container); margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .header-corporativo img { height: 35px; width: auto; }
+        .header-corporativo h1 { font-size: 1.2em; color: #111; font-weight: 700; margin: 0; text-align: right; letter-spacing: -0.5px; }
+        #logout-link { color: var(--color-principal); text-decoration: none; font-weight: 600; font-size: 0.9em; transition: color 0.2s; }
+        #logout-link:hover { color: var(--color-principal-hover); text-decoration: underline; }
+        
+        /* --- ESTRUCTURA DE VISTAS --- */
+        .main-content { 
+            padding: 24px; flex-grow: 1; overflow: hidden; position: relative;
+        }
+        .view-section {
+            position: absolute; top: 0; left: 0; display: flex;
+            height: 100%; width: 100%; max-width: var(--max-width-container);
+            margin: 0 auto; gap: 24px; opacity: 0; transform: translateX(20px);
+            pointer-events: none; transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+        }
+        .view-section.active-view {
+            opacity: 1; transform: translateX(0); pointer-events: auto; position: relative;
+        }
+
+        /* --- COLUMNAS Y PANELES (Modernizados) --- */
+        .col-left { flex: 1; min-width: 350px; max-width: 450px; display: flex; flex-direction: column; gap: 24px; overflow-y: auto; }
+        .col-right { flex: 2; display: flex; flex-direction: column; min-width: 0; }
+        
+        .panel {
+            background-color: var(--color-blanco);
+            border-radius: var(--radio-borde);
+            box-shadow: var(--sombra-card);
+            border: none; /* Sin borde duro */
+            display: flex; flex-direction: column; overflow: hidden;
+            height: auto; /* Cambio para permitir scroll en col-left */
+            min-height: 200px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            flex-shrink: 0; /* Evita que se aplasten */
+        }
+        /* Panel flexible solo para la derecha */
+        .col-right .panel { height: 100%; }
+
+        
+        .panel-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--color-borde-suave);
+            background-color: #fff;
+            flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;
+        }
+        .panel-header h3 { color: #111; font-weight: 700; letter-spacing: -0.3px; }
+        
+        .panel-body { padding: 24px; overflow-y: auto; flex-grow: 1; }
+        
+        /* Scrollbar elegante */
+        .panel-body::-webkit-scrollbar, #product-results-list::-webkit-scrollbar, .col-left::-webkit-scrollbar { width: 6px; }
+        .panel-body::-webkit-scrollbar-track, #product-results-list::-webkit-scrollbar-track, .col-left::-webkit-scrollbar-track { background: transparent; }
+        .panel-body::-webkit-scrollbar-thumb, #product-results-list::-webkit-scrollbar-thumb, .col-left::-webkit-scrollbar-thumb { background-color: #d1d5db; border-radius: 20px; }
+        .panel-body::-webkit-scrollbar-thumb:hover, .col-left::-webkit-scrollbar-thumb:hover { background-color: #9ca3af; }
+
+        /* --- INPUTS Y FORMULARIOS --- */
+        .campo { margin-bottom: 16px; }
+        .campo label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.85em; color: var(--color-secundario); }
+        .campo input, .campo select {
+            width: 100%; padding: 10px 12px; 
+            background-color: #f9fafb;
+            border: 1px solid var(--color-borde-suave);
+            border-radius: 8px; 
+            font-family: var(--font-main); font-size: 0.95em; color: #111;
+            transition: all 0.2s ease;
+        }
+        .campo input:focus, .campo select:focus { 
+            outline: none; 
+            border-color: var(--color-principal); 
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(206, 23, 25, 0.1); 
+        }
+        
+        /* --- FILTROS PILLS (Mejora UX) --- */
+        .filtros-rapidos { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+        .filtro-toggle-input { display: none; }
+        .filtro-toggle-label {
+            padding: 8px 16px;
+            border: 1px solid var(--color-borde-suave);
+            border-radius: 50px; /* Pill shape */
+            font-size: 0.85em; font-weight: 600; color: var(--color-texto-secundario);
+            cursor: pointer; background: #fff;
+            transition: all 0.2s ease; user-select: none;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .filtro-toggle-label:hover { border-color: #ccc; transform: translateY(-1px); }
+        .filtro-toggle-input:checked + .filtro-toggle-label {
+            background-color: var(--color-principal);
+            color: white;
+            border-color: var(--color-principal);
+            box-shadow: 0 4px 6px rgba(206, 23, 25, 0.25);
+        }
+
+        /* --- RESULTADOS GRID (Mejora Visual) --- */
+        #product-results-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px; /* Espaciado aumentado */
+            padding: 24px;
+            overflow-y: auto; height: 100%;
+            background-color: #f9fafb;
+            transition: opacity 0.2s ease-in-out;
+        }
+        #product-results-list.is-loading { opacity: 0.5; pointer-events: none; }
+
+        .product-card {
+            background: white;
+            border: none; /* Sin borde */
+            border-radius: var(--radio-borde);
+            padding: 20px;
+            cursor: pointer;
+            display: flex; gap: 16px; align-items: flex-start;
+            box-shadow: var(--sombra-card);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--sombra-hover);
+        }
+        .product-card::before { /* Indicador hover sutil */
+            content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 4px;
+            background-color: var(--color-principal);
+            border-top-left-radius: var(--radio-borde); border-bottom-left-radius: var(--radio-borde);
+            opacity: 0; transition: opacity 0.2s;
+        }
+        .product-card:hover::before { opacity: 1; }
+
+        .card-thumb-container {
+            width: 90px; height: 90px; /* Imagen más grande */
+            border-radius: 8px; background-color: #f3f4f6;
+            flex-shrink: 0; overflow: hidden;
+            display: flex; align-items: center; justify-content: center; position: relative;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+        }
+        .card-thumb-container::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.3);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='white'%3E%3Cpath fill-rule='evenodd' d='M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z' clip-rule='evenodd' /%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: center; background-size: 28px;
+            opacity: 0; transition: opacity 0.2s;
+        }
+        .card-thumb-container:hover::after { opacity: 1; }
+
+        .card-thumb { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+        .card-thumb-container:hover .card-thumb { transform: scale(1.1); }
+        
+        .card-info { flex-grow: 1; min-width: 0; }
+        .card-title { font-weight: 700; font-size: 1.1em; color: #111; margin: 0 0 4px 0; line-height: 1.3; }
+        .card-sub { font-size: 0.9em; color: var(--color-texto-secundario); margin-bottom: 10px; }
+        .card-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tag {
+            background: var(--color-tag-bg); color: var(--color-tag-text);
+            font-size: 0.75em; padding: 4px 10px; border-radius: 6px; font-weight: 600;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        /* --- DETALLE (LAYOUT OPTIMIZADO) --- */
+        .btn-volver {
+            background: none; border: none; color: var(--color-secundario); 
+            font-weight: 600; font-size: 0.95em; cursor: pointer;
+            display: flex; align-items: center; gap: 8px; 
+            padding: 8px 12px; border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .btn-volver:hover { background-color: #f3f4f6; color: var(--color-principal); }
+        .btn-volver svg { width: 18px; height: 18px; }
+
+        #detail-image-container {
+            width: 100%; height: 250px; /* Altura fija elegante */
+            background-color: #fff; border: 1px solid var(--color-borde-suave); 
+            border-radius: var(--radio-borde);
+            display: flex; align-items: center; justify-content: center; 
+            margin-bottom: 20px; overflow: hidden; position: relative; cursor: zoom-in;
+        }
+        #detail-product-image { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+        /* FORMULARIO GRID (Mejora UX: 2 Columnas) */
+        #formulario-prescripcion fieldset {
+            border: 1px solid var(--color-borde-suave); border-radius: var(--radio-borde);
+            padding: 20px; margin: 0 0 20px 0;
+            background-color: #fafafa; /* Fondo sutil para diferenciar */
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* 2 Columnas */
+            gap: 16px;
+        }
+        #formulario-prescripcion fieldset .campo { margin-bottom: 0; } /* Reset margin inside grid */
+        
+        legend {
+            font-weight: 700; font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.5px;
+            color: white; background-color: var(--color-principal);
+            padding: 4px 12px; border-radius: 4px;
+        }
+
+        /* --- TEXTO GENERADO (Estilo Documento) --- */
+        #texto-generado {
+            font-family: var(--font-tech); /* Fuente monoespaciada técnica */
+            font-size: 0.95em; line-height: 1.8; color: #333;
+            white-space: pre-wrap; margin: 0;
+            background-color: #fff;
+            padding: 30px;
+            border: 1px solid #e5e5e5;
+            border-left: 5px solid var(--color-principal); /* Acento visual */
+            border-radius: 4px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        }
+        
+        /* Animación de actualización */
+        @keyframes highlightPulse {
+            0% { background-color: #fff; }
+            50% { background-color: #fff1f2; } /* Flash rojo muy suave */
+            100% { background-color: #fff; }
+        }
+        .texto-actualizado { animation: highlightPulse 0.6s ease; }
+
+        .resaltado { color: var(--color-principal); font-weight: 600; }
+
+        /* --- BOTONES DE ACCIÓN --- */
+        .acciones-container { display: flex; flex-wrap: wrap; gap: 10px; }
+        .btn-accion {
+            background-color: var(--color-principal); color: white; border: none;
+            padding: 10px 20px; border-radius: 8px;
+            cursor: pointer; font-weight: 600; font-size: 0.9em;
+            display: inline-flex; align-items: center; justify-content: center;
+            transition: all 0.2s; box-shadow: 0 2px 4px rgba(206, 23, 25, 0.3);
+        }
+        .btn-accion:hover { 
+            background-color: var(--color-principal-hover); 
+            transform: translateY(-2px); 
+            box-shadow: 0 4px 10px rgba(206, 23, 25, 0.4); 
+        }
+        .btn-accion.secundario { 
+            background-color: #fff; color: var(--color-secundario);
+            border: 1px solid var(--color-borde-suave);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .btn-accion.secundario:hover {
+            background-color: #f9fafb; border-color: #d1d5db; color: #111;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+        }
+        
+        /* --- HISTORIAL --- */
+        #history-list .history-item {
+            padding: 14px;
+            border-bottom: 1px solid var(--color-borde-suave);
+            font-size: 0.9em;
+            transition: background-color 0.2s;
+        }
+        #history-list .history-item:last-child { border-bottom: none; }
+        #history-list .history-item:hover { background-color: #f9fafb; }
+        #history-list .history-item strong { display: block; color: #111; margin-bottom: 2px; }
+        #history-list .history-item .details { font-size: 0.85em; color: #666; margin-bottom: 4px; }
+        #history-list .history-item small { display: block; color: #999; font-size: 0.75em; text-transform: uppercase; }
+        
+        /* --- UTILIDADES --- */
+        .btn-limpiar {
+            background: none; border: 1px solid var(--color-borde-suave); color: var(--color-secundario);
+            border-radius: 6px; padding: 6px 12px; font-size: 0.8em; cursor: pointer; font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-limpiar:hover { background-color: #f3f4f6; border-color: #d1d5db; }
+        .btn-limpiar.active {
+            background-color: var(--color-principal); border-color: var(--color-principal); color: white;
+            box-shadow: 0 2px 4px rgba(206,23,25,0.3);
+        }
+        
+        .empty-search-state {
+            grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 300px; color: #9ca3af; text-align: center;
+        }
+        .empty-search-state svg { width: 64px; height: 64px; margin-bottom: 16px; opacity: 0.5; }
+        .oculto { display: none !important; }
+
+        /* --- MODAL DE IMAGEN (Lightbox) --- */
+        #image-modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9);
+            z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px;
+            cursor: zoom-out; opacity: 0; pointer-events: none; transition: opacity 0.3s ease-in-out;
+            backdrop-filter: blur(5px);
+        }
+        #image-modal-overlay.visible { opacity: 1; pointer-events: auto; }
+        #modal-content { position: relative; max-width: 90%; max-height: 90%; }
+        #modal-image { max-width: 100%; max-height: 90vh; border-radius: 8px; box-shadow: var(--sombra-modal); }
+        #modal-close-btn {
+            position: absolute; top: -50px; right: 0; background: none; border: none; color: white;
+            font-size: 40px; cursor: pointer; opacity: 0.8; transition: opacity 0.2s;
+        }
+        #modal-close-btn:hover { opacity: 1; transform: scale(1.1); }
+
+        /* --- SKELETON LOADERS --- */
+        @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
+        .skeleton-card { 
+            background: white; border-radius: var(--radio-borde); padding: 20px; 
+            display: flex; gap: 16px; align-items: center; border: 1px solid #f0f0f0;
+        }
+        .skeleton-thumb { width: 90px; height: 90px; border-radius: 8px; background: #f3f4f6; flex-shrink: 0; }
+        .skeleton-info { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+        .skeleton-line { height: 12px; border-radius: 4px; background: #f3f4f6; width: 100%; }
+        .skeleton-line.title { height: 16px; width: 70%; }
+        .skeleton-thumb, .skeleton-line {
+            background: linear-gradient(to right, #f3f4f6 8%, #e5e7eb 18%, #f3f4f6 33%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite linear;
+        }
+
+        /* --- ESTILOS NUEVOS PARA CALCULADORA --- */
+        .budget-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px dashed var(--color-borde-suave);
+        }
+
+        .budget-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .budget-row-full {
+            grid-column: 1 / -1;
+        }
+
+        .precio-highlight {
+            font-family: var(--font-tech);
+            font-size: 1.2em;
+            font-weight: 700;
+            color: var(--color-principal);
+            text-align: right;
+        }
+
+        .total-card {
+            background-color: #fef2f2; /* Rojo muy pálido */
+            border: 1px solid #fee2e2;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        .total-row.final {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(0,0,0,0.1);
+            font-weight: 700;
+            font-size: 1.1em;
+            color: #111;
+        }
+
+        .currency-input-wrapper {
+            position: relative;
+        }
+        .currency-input-wrapper span {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            pointer-events: none;
+        }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 1024px) {
+            #formulario-prescripcion fieldset { grid-template-columns: 1fr; } /* 1 columna en tablet vertical */
+        }
+        @media (max-width: 900px) {
+            .main-content { padding: 16px; }
+            .view-section { display: none; position: relative; flex-direction: column; opacity: 1; transform: none; overflow-y: auto; }
+            .view-section.active-view { display: flex; }
+            .col-left, .col-right { width: 100%; max-width: none; flex: none; }
+            .panel { height: auto; overflow: visible; margin-bottom: 20px; }
+            .col-left { overflow-y: visible; }
+            #product-results-list { height: 500px; }
+            .header-corporativo h1 { font-size: 1em; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ================================================== -->
+    <!-- PANTALLA DE LOGIN (SOBREPUESTA) -->
+    <!-- ================================================== -->
+    <div id="login-overlay">
+        <div id="login-box">
+            <img src="LOGO-PAMESA.jpg" alt="Logo Pamesa Cerámica" id="login-logo">
+            <h2>Acceso al Generador</h2>
+            <p>Introduce tus credenciales para continuar.</p>
+            <div class="campo" style="text-align:left;">
+                <label for="login-username">Nombre de Usuario</label>
+                <input type="text" id="login-username" placeholder="Tu nombre o identificador">
+            </div>
+            <div class="campo" style="text-align:left;">
+                <label for="login-password">Contraseña</label>
+                <input type="password" id="login-password" placeholder="••••••••••">
+            </div>
+            <div id="login-error"></div>
+            <button id="login-button" class="btn-accion">Entrar</button>
+        </div>
+    </div>
+
+    <!-- CABECERA -->
+    <header class="header-corporativo">
+        <div class="header-container">
+            <img src="LOGO-PAMESA.jpg" alt="Logo Pamesa Cerámica" onerror="this.style.display='none'">
+            <div style="text-align: right;">
+                <h1 style="margin-bottom: 5px;">Generador de Prescripciones v4.0</h1>
+                <div id="user-info" class="oculto" style="font-size: 0.9em; color: #666;">
+                    <span id="user-greeting" style="font-weight:600; color:#333;"></span> | <a href="#" id="logout-link">Salir</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        
+        <!-- ========================================= -->
+        <!-- MODO 1: BÚSQUEDA (Vista por defecto)      -->
+        <!-- ========================================= -->
+        <div id="view-search" class="view-section">
+            
+            <!-- Columna Izquierda: Filtros e Historial -->
+            <div class="col-left">
+                <!-- Panel de Filtros -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3>Filtros de Búsqueda</h3>
+                        <button type="button" id="btn-clear-filters" class="btn-limpiar">Limpiar</button>
+                    </div>
+                    <div class="panel-body">
+                        <div id="formulario-busqueda">
+                            <div class="campo">
+                                <label for="search-keyword">Búsqueda inteligente</label>
+                                <input type="text" id="search-keyword" placeholder="Buscar serie, modelo, efecto, color...">
+                            </div>
+                            
+                            <div class="campo">
+                                <label>Características Rápidas</label>
+                                <div class="filtros-rapidos">
+                                    <div>
+                                        <input type="checkbox" id="filtro-20mm" class="filtro-toggle-input">
+                                        <label for="filtro-20mm" class="filtro-toggle-label">20mm</label>
+                                    </div>
+                                    <div>
+                                        <input type="checkbox" id="filtro-ext" class="filtro-toggle-input">
+                                        <label for="filtro-ext" class="filtro-toggle-label">Acabado EXT</label>
+                                    </div>
+                                    <div>
+                                        <input type="checkbox" id="filtro-dup" class="filtro-toggle-input">
+                                        <label for="filtro-dup" class="filtro-toggle-label">Modelo DUP</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="campo"><label>Serie</label><select id="search-serie" data-csv-col="Serie" disabled><option value="">Todas</option></select></div>
+                            <div class="campo"><label>Efecto</label><select id="search-efecto" data-csv-col="Efecto" disabled><option value="">Todos</option></select></div>
+                            <div class="campo"><label>Color</label><select id="search-color" data-csv-col="COLOR" disabled><option value="">Todos</option></select></div>
+                            <div class="campo"><label>Formato</label><select id="search-formato" data-csv-col="FORMATO" disabled><option value="">Todos</option></select></div>
+                            <div class="campo"><label>Modelo</label><select id="search-modelo" data-csv-col="MODELO" disabled><option value="">Todos</option></select></div>
+                            <div class="campo"><label>Tipo Material</label><select id="search-familia" data-csv-col="Desc_Familia_web" disabled><option value="">Todos</option></select></div>
+                            <div class="campo"><label>Clase Resbaladicidad</label><select id="search-resbaladicidad" data-csv-col="en_16165_anexo_c_deslizamiento_pendulo" disabled><option value="">Todas</option></select></div>
+                            
+                            <div id="status-message" style="text-align: center; font-size: 0.85em; color: #999; margin-top:10px;">Cargando datos...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel de Historial -->
+                <div class="panel oculto" id="history-panel" style="flex-shrink:0; max-height: 300px;">
+                    <div class="panel-header">
+                        <h3>Historial Reciente</h3>
+                    </div>
+                    <div class="panel-body" id="history-list">
+                        <p style="color: #999; text-align:center; font-size:0.9em;">No hay actividad reciente.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna Derecha: RESULTADOS -->
+            <div class="col-right">
+                <div class="panel">
+                    <div class="panel-header"><h3>Resultados del Catálogo</h3></div>
+                    <div id="product-results-list">
+                        <!-- Aquí se inyectan los productos o esqueletos -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ========================================= -->
+        <!-- MODO 2: DETALLE (Prescripción)          -->
+        <!-- ========================================= -->
+        <div id="view-detail" class="view-section">
+            
+            <!-- Columna Izquierda: Imagen y Configuración -->
+            <div class="col-left">
+                <div class="panel">
+                    <div class="panel-header">
+                        <button id="btn-back-search" class="btn-volver">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clip-rule="evenodd" /></svg>
+                            Volver al listado
+                        </button>
+                    </div>
+                    <div class="panel-body">
+                        <div id="detail-image-container">
+                            <img id="detail-product-image" src="" alt="Producto">
+                        </div>
+                        <button id="btn-descargar-imagen" class="btn-accion secundario" style="width:100%; margin-bottom:20px; justify-content: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:18px; height:18px; margin-right:8px;"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+                            Descargar Imagen JPG
+                        </button>
+
+                        <form id="formulario-prescripcion">
+                            <fieldset>
+                                <legend>Materiales de Colocación</legend>
+                                <div class="campo"><label>Nombre Adhesivo</label><input type="text" id="adhesivo_nombre" value="MARCA ADHESIVO"></div>
+                                <div class="campo"><label>Fabricante Adhesivo</label><input type="text" id="adhesivo_fabricante" value="NOMBRE FABRICANTE"></div>
+                                <div class="campo"><label>Tipo Adhesivo (EN 12004)</label><input type="text" id="adhesivo_tipo" value=""></div>
+                                <div class="campo"><label>Nombre Mortero Juntas</label><input type="text" id="mortero_nombre" value="MARCA MORTERO"></div>
+                                <div class="campo"><label>Fabricante Mortero</label><input type="text" id="mortero_fabricante" value="NOMBRE FABRICANTE"></div>
+                            </fieldset>
+                            
+                            <fieldset>
+                                <legend>Detalles Ejecución</legend>
+                                <div class="campo"><label>Ancho junta (mm)</label><input type="number" id="junta_maxima" value="3"></div>
+                                <div class="campo"><label>Ancho perimetral (mm)</label><input type="number" id="junta_perimetral" value="5"></div>
+                            </fieldset>
+
+                            <!-- Campos ocultos para lógica interna -->
+                            <input type="hidden" id="tipo_material">
+                            <input type="hidden" id="fabricante" value="PAMESA CERÁMICA">
+                            <input type="hidden" id="coleccion">
+                            <input type="hidden" id="color">
+                            <input type="hidden" id="aspecto">
+                            <input type="hidden" id="dim_ancho">
+                            <input type="hidden" id="dim_alto">
+                            <input type="hidden" id="dim_espesor">
+                            <input type="hidden" id="desviacion" value="0,15%">
+                            <input type="hidden" id="norma_dimensiones" value="UNE-EN ISO10545-2, ISO 13006:2018 UNE-EN 14411:2016">
+                            <input type="hidden" id="destonificado">
+                            <input type="hidden" id="absorcion_agua">
+                            <input type="hidden" id="clase_resbaladicidad">
+                            <input type="hidden" id="valor_rd">
+                            <input type="hidden" id="uso_transito" value="tránsito intenso">
+                            <input type="hidden" id="resistencia_manchas">
+                            <input type="hidden" id="resistencia_quimica">
+                            <input type="hidden" id="modulo_rotura">
+                            <input type="hidden" id="carga_rotura">
+                        </form>
+                    </div>
+                </div>
+
+                <!-- BLOQUE NUEVO: CALCULADORA COMERCIAL -->
+                <div class="panel" style="margin-top: 24px;">
+                    <div class="panel-header">
+                        <h3>Presupuesto Estimativo</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="campo">
+                            <label>Referencia Proyecto / Cliente</label>
+                            <input type="text" id="presu_cliente" placeholder="Ej: Reforma Hotel Bali - Hab. Tipo 1">
+                        </div>
+
+                        <div class="budget-grid">
+                            <div class="campo">
+                                <label>Cantidad (m²)</label>
+                                <input type="number" id="presu_cantidad" value="0" min="0" step="1">
+                            </div>
+                            <div class="campo">
+                                <label>% Merma/Rotura</label>
+                                <input type="number" id="presu_merma" value="10" min="0" max="50">
+                            </div>
+                            
+                            <div class="campo">
+                                <label>PVP Tarifa (€/m²)</label>
+                                <div class="currency-input-wrapper">
+                                    <input type="number" id="presu_pvp" value="0" step="0.01">
+                                    <span>€</span>
+                                </div>
+                            </div>
+                            <div class="campo">
+                                <label>% Descuento</label>
+                                <input type="number" id="presu_dto" value="0" min="0" max="100">
+                            </div>
+                        </div>
+
+                        <div class="campo" style="display:flex; align-items:center; gap:10px; margin-top:5px;">
+                            <input type="checkbox" id="presu_iva" checked style="width:auto;">
+                            <label for="presu_iva" style="margin:0; font-weight:400;">Aplicar IVA (21%)</label>
+                        </div>
+
+                        <!-- Tarjeta de Totales en Tiempo Real -->
+                        <div class="total-card">
+                            <div class="total-row">
+                                <span>Total Material (inc. merma):</span>
+                                <span id="lbl_total_m2">0 m²</span>
+                            </div>
+                            <div class="total-row">
+                                <span>Subtotal:</span>
+                                <span id="lbl_subtotal">0,00 €</span>
+                            </div>
+                            <div class="total-row">
+                                <span>IVA (21%):</span>
+                                <span id="lbl_iva">0,00 €</span>
+                            </div>
+                            <div class="total-row final">
+                                <span>TOTAL PRESUPUESTO:</span>
+                                <span id="lbl_total_final" style="color:var(--color-principal);">0,00 €</span>
+                            </div>
+                        </div>
+
+                        <button id="btn-generar-presupuesto" class="btn-accion" style="width:100%; margin-top:15px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:20px; margin-right:8px;"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+                            Descargar Presupuesto PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna Derecha: TEXTO GENERADO -->
+            <div class="col-right">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3>Prescripción Técnica</h3>
+                        <div class="acciones-container">
+                            <button id="btn-copiar" class="btn-accion">Copiar Texto</button>
+                            <button id="btn-descargar-txt" class="btn-accion secundario">TXT</button>
+                            <button id="btn-descargar-pdf" class="btn-accion secundario">PDF</button>
+                            <a id="link-dap" href="#" target="_blank" class="btn-accion secundario">DAP</a>
+                            <a id="link-dop" href="#" target="_blank" class="btn-accion secundario">DoP</a>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div style="margin-bottom: 20px; display:flex; gap:10px; flex-wrap:wrap;">
+                            <a href="https://www.pamesa.com/ERP/4.0/empresas/151/045/ficheros/t00030006/44/RECOMENDACIONES_PARA_LA_INSTALACION_DE_PRODUCTOS_CERAMICOS__PGEv3.pdf" target="_blank" class="btn-accion secundario" style="font-size:0.75em; padding: 6px 12px;">📥 Guía Instalación</a>
+                            <a href="https://www.pamesa.com/ERP/4.0/empresas/151/045/ficheros/t00030006/99/Pamesa_I_ES-Baldosa_2024.pdf" target="_blank" class="btn-accion secundario" style="font-size:0.75em; padding: 6px 12px;">🛡️ Seguridad</a>
+                        </div>
+                        <pre id="texto-generado"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL DE IMAGEN (Lightbox) -->
+    <div id="image-modal-overlay">
+        <div id="modal-content">
+            <img src="" id="modal-image" alt="Vista ampliada del producto">
+            <button id="modal-close-btn" title="Cerrar">&times;</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- MOSTRAR VERSIÓN EN LOGIN ---
+            const headerTitleElement = document.querySelector('.header-corporativo h1');
+            const loginBox = document.getElementById('login-box');
+        
+            if (headerTitleElement && loginBox) {
+                const fullTitle = headerTitleElement.textContent; 
+                const versionMatch = fullTitle.match(/v[\d.]+/); 
+        
+                if (versionMatch && versionMatch[0]) {
+                    const versionElement = document.createElement('p');
+                    versionElement.textContent = versionMatch[0]; 
+                    versionElement.style.marginTop = '20px';
+                    versionElement.style.fontSize = '0.8em';
+                    versionElement.style.color = '#9ca3af';
+                    versionElement.style.fontWeight = '500';
+                    loginBox.appendChild(versionElement);
+                }
+            }
+        
+            // --- REFERENCIAS DOM ---
+            const ui = {
+                loginOverlay: document.getElementById('login-overlay'),
+                loginButton: document.getElementById('login-button'),
+                loginUsername: document.getElementById('login-username'),
+                loginPassword: document.getElementById('login-password'),
+                loginError: document.getElementById('login-error'),
+                userInfo: document.getElementById('user-info'),
+                userGreeting: document.getElementById('user-greeting'),
+                logoutLink: document.getElementById('logout-link'),
+                historyPanel: document.getElementById('history-panel'),
+                historyList: document.getElementById('history-list'),
+                viewSearch: document.getElementById('view-search'),
+                viewDetail: document.getElementById('view-detail'),
+                btnBackSearch: document.getElementById('btn-back-search'),
+                formulario: document.getElementById('formulario-prescripcion'),
+                statusMessage: document.getElementById('status-message'),
+                btnClearFilters: document.getElementById('btn-clear-filters'),
+                searchKeyword: document.getElementById('search-keyword'),
+                quickFilters: Array.from(document.querySelectorAll('.filtro-toggle-input')),
+                allSelectFilters: Array.from(document.querySelectorAll('select[data-csv-col]')).reduce((acc, select) => {
+                    acc[select.dataset.csvCol] = select;
+                    return acc;
+                }, {}),
+                productResultsList: document.getElementById('product-results-list'),
+                detailImage: document.getElementById('detail-product-image'),
+                detailImageContainer: document.getElementById('detail-image-container'),
+                output: document.getElementById('texto-generado'),
+                btnCopiar: document.getElementById('btn-copiar'),
+                btnDescargarTxt: document.getElementById('btn-descargar-txt'),
+                btnDescargarPdf: document.getElementById('btn-descargar-pdf'),
+                btnDescargarImagen: document.getElementById('btn-descargar-imagen'),
+                linkDAP: document.getElementById('link-dap'),
+                linkDOP: document.getElementById('link-dop'),
+                modalOverlay: document.getElementById('image-modal-overlay'),
+                modalImage: document.getElementById('modal-image'),
+                modalCloseBtn: document.getElementById('modal-close-btn'),
+                // Nuevas Referencias para Presupuesto
+                presuInputs: {
+                    cliente: document.getElementById('presu_cliente'),
+                    cantidad: document.getElementById('presu_cantidad'),
+                    merma: document.getElementById('presu_merma'),
+                    pvp: document.getElementById('presu_pvp'),
+                    dto: document.getElementById('presu_dto'),
+                    ivaCheck: document.getElementById('presu_iva')
+                },
+                presuLabels: {
+                    totalM2: document.getElementById('lbl_total_m2'),
+                    subtotal: document.getElementById('lbl_subtotal'),
+                    iva: document.getElementById('lbl_iva'),
+                    totalFinal: document.getElementById('lbl_total_final')
+                },
+                btnGenerarPresupuesto: document.getElementById('btn-generar-presupuesto')
+            };
+        
+            // --- ESTADO Y CONFIGURACIÓN ---
+            let csvData = [];
+            let selectedProductIndex = null;
+            let currentUser = null;
+            const MASTER_PASSWORD = 'pamesa2025';
+            
+            const revestimientoTypes = [
+                'Revestimiento pasta blanca no rectificada',
+                'Revestimiento pasta roja no rectificado',
+                'Revestimiento pasta blanca rectificada'
+            ];
+            
+            // --- PLANTILLAS DE TEXTO (Mantenidas igual) ---
+            const pavimentoTemplate = `Suministro y ejecución de pavimento con <span class="resaltado">{tipo_material}</span>, de aspecto <span class="resaltado">{aspecto}</span>, colección <span class="resaltado">{coleccion}</span>, color <span class="resaltado">{color}</span> de <span class="resaltado">{fabricante}</span>. Conformado por prensado en seco, tratado en monococción a temperatura de 1200ºC.\n\nCerámica con dimensiones nominales de (Ancho x Alto x Espesor) <span class="resaltado">{dim_ancho}</span>x<span class="resaltado">{dim_alto}</span>x<span class="resaltado">{dim_espesor}</span> cm, desviación de longitud/anchura, rectitud de lados, ortogonalidad y planimetría inferior a <span class="resaltado">{desviacion}</span> (<span class="resaltado">{norma_dimensiones}</span>).\n\nDestonificado <span class="resaltado">{destonificado}</span>, con una absorción de agua muy baja <span class="resaltado">{absorcion_agua}</span> según ISO 10545-3. Clasificación de suelos según su resbaladicidad <span class="resaltado">{clase_resbaladicidad}</span> (CTE DBSUA), resistencia al deslizamiento <span class="resaltado">{valor_rd}</span> (UNE 41901:2017 EX). Módulo de rotura <span class="resaltado">{modulo_rotura}</span> (ISO-13006:2018 UNE-EN 14411:2016) y carga de rotura <span class="resaltado">{carga_rotura}</span> según ISO10545-4.\n\nPavimento de <span class="resaltado">{uso_transito}</span> conforme a la clasificación de baldosas según uso de la Guía de la Baldosa Cerámica (Documento reconocido DRB 01/11), resistente al choque térmico, al cuarteo, a la helada, a las manchas <span class="resaltado">{resistencia_manchas}</span>, según ISO 10545-14 y a los ataques químicos: <span class="resaltado">{resistencia_quimica}</span>, según ISO 10545-13.\n\nContribuye a los estándares de construcción sostenible y saludable (LEED, BREEAM, WELL) gracias a disponer de Declaración Ambiental de Producto propia (DAP), no ser una fuente emisora de sustancias peligrosas COV’s ni formaldehidos, así como por disponer de contenido de material reciclado >6%. Disponible marcado CE.\n\nCerámica recibida sobre recrecido cementoso sin calefacción radiante (no incluido), apto para la colocación en capa fina y tránsito previsto, con adhesivo de altas prestaciones con excelente adherencia y deformabilidad, <span class="resaltado">{adhesivo_nombre}</span> de <span class="resaltado">{adhesivo_fabricante}</span>, tipo <span class="resaltado">{adhesivo_tipo}</span>, según EN 12004, prescrito de acuerdo a las indicaciones de la UNE 138002 y rejuntadas con mortero de juntas cementoso de fraguado y endurecimiento rápido, <span class="resaltado">{mortero_nombre}</span> de <span class="resaltado">{mortero_fabricante}</span>, según EN 13888, para juntas de hasta <span class="resaltado">{junta_maxima}</span>mm.\n\nI/p.p medios auxiliares. Utilización de p/p de Crucetas Autonivelantes (no incluidas), formación de juntas perimetrales continuas, de anchura no menor de <span class="resaltado">{junta_perimetral}</span> mm, en los límites con paredes, pilares exentos y elevaciones de nivel y, en su caso, juntas de partición intermedias. Respetar juntas estructurales existentes en el soporte. Incluso limpieza y comprobación del grado de humedad de la base. Replanteo de niveles. Replanteo de la disposición de las baldosas y juntas de movimiento. Aplicación del adhesivo. Colocación de las crucetas. Colocación de las baldosas con llana dentada y doble encolado. Relleno, si procede, de las juntas de partición intermedias. Rejuntado. Eliminación y limpieza del material sobrante. Limpieza inicial del pavimento al finalizar la obra y protección hasta entrega de obra. Todo el proceso de colocación se efectuará según indicaciones de la dirección facultativa y norma UNE 138002.`;
+            
+            const revestimientoTemplate = `Suministro y ejecución de revestimiento con <span class="resaltado">{tipo_material}</span>, de aspecto <span class="resaltado">{aspecto}</span>, colección <span class="resaltado">{coleccion}</span>, color <span class="resaltado">{color}</span> de <span class="resaltado">{fabricante}</span>.\n\nCerámica con dimensiones nominales (Ancho x Largo x Espesor) <span class="resaltado">{dim_ancho}</span>x<span class="resaltado">{dim_alto}</span>x<span class="resaltado">{dim_espesor}</span> cm, desviación de longitud/anchura, rectitud de lados, ortogonalidad y planimetría inferior a <span class="resaltado">{desviacion}</span> (<span class="resaltado">{norma_dimensiones}</span>).\n\nDestonificado <span class="resaltado">{destonificado}</span> con una absorción de agua <span class="resaltado">{absorcion_agua}</span>, módulo de rotura <span class="resaltado">{modulo_rotura}</span> y fuerza de rotura <span class="resaltado">{carga_rotura}</span> (ISO-13006:2018 UNE-EN 14411:2016).\n\nContribuye a los estándares de construcción sostenible y saludable (LEED, BREEAM, WELL) gracias a disponer de Declaración Ambiental de Producto propia (DAP), no ser una fuente emisora de sustancias peligrosas COVs ni formaldehidos, así como por disponer de contenido de material reciclado >6%.\n\nColocación en capa fina, con adhesivo cementoso tecnológico avanzado, <span class="resaltado">{adhesivo_nombre}</span> de <span class="resaltado">{adhesivo_fabricante}</span>, tipo <span class="resaltado">{adhesivo_tipo}</span> según EN 12004, prescrito de acuerdo a las indicaciones de la UNE 138002 y rejuntadas con mortero de juntas cementoso de fraguado y endurecimiento rápido, <span class="resaltado">{mortero_nombre}</span> de <span class="resaltado">{mortero_fabricante}</span>, según EN 13888, para juntas de hasta <span class="resaltado">{junta_maxima}</span> mm.\n\nI/p.p medios auxiliares. Utilización de p/p de Crucetas Autonivelantes (no incluidas), formación de juntas perimetrales continuas, de anchura no menor de <span class="resaltado">{junta_perimetral}</span> mm, en los límites con paredes, pilares exentos y elevaciones de nivel y, en su caso, juntas de partición intermedias. Respetar juntas estructurales existentes en el soporte. Limpieza y comprobación del grado de humedad de la base. Replanteo de niveles. Replanteo de la disposición de las baldosas y juntas de movimiento. Aplicación del adhesivo. Colocación de las crucetas. Colocación de las baldosas con llana dentada y doble encolado. Relleno, si procede, de las juntas de partición intermedias. Rejuntado. Eliminación y limpieza del material sobrante. Limpieza inicial del pavimento al finalizar la obra y protección hasta entrega de obra. Todo el proceso de colocación se efectuará según indicaciones de la dirección facultativa y norma UNE 138002.`;
+            
+            const pavimentoPastaRojaTemplate = `Suministro y ejecución de pavimento con <span class="resaltado">{tipo_material}</span>, de aspecto <span class="resaltado">{aspecto}</span>, colección <span class="resaltado">{coleccion}</span>, color <span class="resaltado">{color}</span> de <span class="resaltado">{fabricante}</span>. Conformado por prensado en seco, tratado en monococción a temperatura de 1145ºC.\n\nCerámica con dimensiones nominales de (Ancho x Alto x Espesor) <span class="resaltado">{dim_ancho}</span>x<span class="resaltado">{dim_alto}</span>x<span class="resaltado">{dim_espesor}</span> cm, desviación de longitud/anchura, rectitud de lados, ortogonalidad y planimetría inferior a <span class="resaltado">{desviacion}</span> (<span class="resaltado">{norma_dimensiones}</span>).\n\nDestonificado <span class="resaltado">{destonificado}</span>, con una absorción de agua baja <span class="resaltado">{absorcion_agua}</span> según ISO 10545-3. Clasificación de suelos según su resbaladicidad <span class="resaltado">{clase_resbaladicidad}</span> (CTE DBSUA), resistencia al deslizamiento <span class="resaltado">{valor_rd}</span> (UNE 41901:2017 EX). Módulo de rotura <span class="resaltado">{modulo_rotura}</span> (ISO-13006:2018 UNE-EN 14411:2016) y carga de rotura <span class="resaltado">{carga_rotura}</span> según ISO10545-4.\n\nPavimento de <span class="resaltado">{uso_transito}</span> conforme a la clasificación de baldosas según uso de la Guía de la Baldosa Cerámica (Documento reconocido DRB 01/11), resistente al choque térmico, al cuarteo, a la helada, a las manchas <span class="resaltado">{resistencia_manchas}</span>, según ISO 10545-14 y a los ataques químicos: <span class="resaltado">{resistencia_quimica}</span>, según ISO 10545-13.\n\nContribuye a los estándares de construcción sostenible y saludable (LEED, BREEAM, WELL) gracias a disponer de Declaración Ambiental de Producto propia (DAP), no ser una fuente emisora de sustancias peligrosas COV’s ni formaldehidos, así como por disponer de contenido de material reciclado >6%. Disponible marcado CE.\n\nCerámica recibida sobre recrecido cementoso sin calefacción radiante (no incluido), apto para la colocación en capa fina y tránsito previsto, con adhesivo de altas prestaciones con excelente adherencia y deformabilidad, <span class="resaltado">{adhesivo_nombre}</span> de <span class="resaltado">{adhesivo_fabricante}</span>, tipo <span class="resaltado">{adhesivo_tipo}</span>, según EN 12004, prescrito de acuerdo a las indicaciones de la UNE 138002 y rejuntadas con mortero de juntas cementoso de fraguado y endurecimiento rápido, <span class="resaltado">{mortero_nombre}</span> de <span class="resaltado">{mortero_fabricante}</span>, según EN 13888, para juntas de hasta <span class="resaltado">{junta_maxima}</span>mm.\n\nI/p.p medios auxiliares. Utilización de p/p de Crucetas Autonivelantes (no incluidas), formación de juntas perimetrales continuas, de anchura no menor de <span class="resaltado">{junta_perimetral}</span> mm, en los límites con paredes, pilares exentos y elevaciones de nivel y, en su caso, juntas de partición intermedias. Respetar juntas estructurales existentes en el soporte. Incluso limpieza y comprobación del grado de humedad de la base. Replanteo de niveles. Replanteo de la disposición de las baldosas y juntas de movimiento. Aplicación del adhesivo. Colocación de las crucetas. Colocación de las baldosas con llana dentada y doble encolado. Relleno, si procede, de las juntas de partición intermedias. Rejuntado. Eliminación y limpieza del material sobrante. Limpieza inicial del pavimento al finalizar la obra y protección hasta entrega de obra. Todo el proceso de colocación se efectuará según indicaciones de la dirección facultativa y norma UNE 138002.`;
+        
+            // --- SISTEMA DE LOGIN ---
+            function checkLogin() {
+                const username = localStorage.getItem('currentUser');
+                if (username) {
+                    currentUser = username;
+                    ui.userGreeting.textContent = `Hola, ${currentUser}`;
+                    ui.userInfo.classList.remove('oculto');
+                    ui.loginOverlay.style.opacity = '0';
+                    setTimeout(() => ui.loginOverlay.classList.add('oculto'), 300);
+                    ui.historyPanel.classList.remove('oculto');
+                    loadDataAndInitializeApp();
+                    displayHistory();
+                } else {
+                    ui.loginOverlay.classList.remove('oculto');
+                    ui.loginOverlay.style.opacity = '1';
+                }
+            }
+        
+            function handleLogin() {
+                const username = ui.loginUsername.value.trim();
+                const password = ui.loginPassword.value.trim();
+                ui.loginError.textContent = '';
+                if (!username || !password) {
+                    ui.loginError.textContent = 'Usuario y contraseña son obligatorios.';
+                    return;
+                }
+                if (password === MASTER_PASSWORD) {
+                    localStorage.setItem('currentUser', username);
+                    checkLogin();
+                } else {
+                    ui.loginError.textContent = 'Contraseña incorrecta.';
+                    ui.loginPassword.value = '';
+                }
+            }
+        
+            function handleLogout() {
+                localStorage.removeItem('currentUser');
+                currentUser = null;
+                location.search = ''; 
+                location.reload();
+            }
+            
+            // --- HISTORIAL ---
+            function savePrescriptionToHistory() {
+                if (!currentUser || selectedProductIndex === null) return;
+                const product = csvData[selectedProductIndex];
+            
+                const historyKey = `history_${currentUser}`;
+                let history = JSON.parse(localStorage.getItem(historyKey)) || [];
+                
+                const newEntry = { 
+                    model: product.MODELO || 'S/M', 
+                    color: product.COLOR || 'S/C', 
+                    // --- ID CORRECTO ---
+                    id: product['Id.Articulo'] || 'N/A', 
+                    format: product.FORMATO || 'S/F', 
+                    finish: product.Acabado || 'S/A', 
+                    date: new Date().toLocaleString('es-ES') 
+                };
+                
+                // Evitamos duplicados consecutivos
+                if (history.length > 0 && history[0].id === newEntry.id) return;
+        
+                history.unshift(newEntry);
+                if (history.length > 20) { history = history.slice(0, 20); }
+                localStorage.setItem(historyKey, JSON.stringify(history));
+                displayHistory();
+            } // CORRECCION: Llave añadida
+        
+            function displayHistory() {
+                if (!currentUser) return;
+                const historyKey = `history_${currentUser}`;
+                const history = JSON.parse(localStorage.getItem(historyKey)) || [];
+                
+                ui.historyList.innerHTML = ''; 
+        
+                if (history.length === 0) {
+                    ui.historyList.innerHTML = `<p style="color: #999; text-align:center; padding:10px;">Aún no hay historial.</p>`;
+                    return;
+                }
+        
+                history.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'history-item';
+                    div.style.cursor = 'pointer'; 
+                    
+                    div.innerHTML = `
+                        <strong>${item.model} - ${item.color}</strong>
+                        <div class="details">${item.format} | ${item.finish}</div>
+                        <small>${item.date}</small>
+                    `;
+                    
+                    div.addEventListener('click', () => {
+                        const index = csvData.findIndex(p => p['Id.Articulo'] === item.id);
+                        if (index !== -1) {
+                            goToDetailMode(index);
+                        } else {
+                            alert('Este producto (ID: ' + item.id + ') ya no se encuentra en el catálogo cargado.');
+                        }
+                    });
+        
+                    ui.historyList.appendChild(div);
+                });
+            }
+        
+            // --- NAVEGACIÓN ENTRE VISTAS ---
+            function goToSearchMode() {
+                ui.viewDetail.classList.remove('active-view');
+                ui.viewSearch.classList.add('active-view');
+                
+                // Limpiar URL al volver
+                const newUrl = new URL(window.location);
+                newUrl.searchParams.delete('producto');
+                window.history.pushState({ page: 'search' }, '', newUrl);
+            }
+        
+            function goToDetailMode(productIndex) { // CORRECCION: Typo 'unction' arreglado
+                selectedProductIndex = productIndex;
+                const product = csvData[productIndex];
+                
+                if (product) {
+                    populateDetailView(product);
+                    ui.viewSearch.classList.remove('active-view');
+                    ui.viewDetail.classList.add('active-view');
+                    
+                    // Actualizar URL con ID
+                    const productId = product['Id.Articulo']; 
+                    if (productId) {
+                        const newUrl = new URL(window.location);
+                        newUrl.searchParams.set('producto', productId);
+                        window.history.pushState({ page: 'detail', id: productId }, '', newUrl);
+                    }
+                }
+            } // CORRECCION: Llave añadida
+        
+            // --- LOGICA DE DETALLE Y GENERACIÓN DE TEXTO ---
+            function populateDetailView(product) {
+                const productType = product['Desc_Familia_web'] || '';
+                document.getElementById('tipo_material').value = productType;
+                document.getElementById('coleccion').value = product['MODELO'] || '';
+                document.getElementById('color').value = product['COLOR'] || '';
+                document.getElementById('aspecto').value = [product['Efecto'], product['Acabado']].filter(Boolean).join(' / ');
+                document.getElementById('dim_ancho').value = product['Ancho'] ? product['Ancho'].replace(',', '.') : '';
+                document.getElementById('dim_alto').value = product['Alto'] ? product['Alto'].replace(',', '.') : '';
+                document.getElementById('dim_espesor').value = product['Espesor(mm)'] ? product['Espesor(mm)'].replace(',', '.') : '';
+                document.getElementById('destonificado').value = product['Variacion_cromatica'] || '';
+                document.getElementById('absorcion_agua').value = product['iso_10545_3_absorcion_agua'] || '';
+                document.getElementById('clase_resbaladicidad').value = product['en_16165_anexo_c_deslizamiento_pendulo'] || '';
+                document.getElementById('valor_rd').value = product['(Rd)'] || '';
+                document.getElementById('resistencia_manchas').value = product['Resistenci_ a_manchas'] || '';
+                document.getElementById('resistencia_quimica').value = product['Resistencia_a_ataques_químicos'] || '';
+                document.getElementById('modulo_rotura').value = product['iso_10545_4_resistencia_flexion'] || '';
+                document.getElementById('carga_rotura').value = product['iso_10545_4_fuerza_rotura'] || '';
+                document.getElementById('adhesivo_tipo').value = product['Adhesivo'] || 'C2';
+                
+                document.getElementById('junta_maxima').value = "3"; 
+                document.getElementById('junta_perimetral').value = "5";
+        
+                const imageUrl = product['imagen_url_web'];
+                if (imageUrl && imageUrl.trim() !== "") {
+                    ui.detailImage.src = imageUrl;
+                    ui.detailImageContainer.style.display = 'flex';
+                    ui.btnDescargarImagen.style.display = 'inline-flex';
+                } else {
+                    ui.detailImage.src = ''; 
+                    ui.detailImageContainer.style.display = 'none';
+                    ui.btnDescargarImagen.style.display = 'none';
+                }
+        
+                ui.linkDAP.href = product['declaracion_ambiental_producto'] || '#';
+                ui.linkDOP.href = product['declaracion_prestaciones'] || '#';
+                ui.linkDAP.style.display = product['declaracion_ambiental_producto'] ? 'inline-flex' : 'none';
+                ui.linkDOP.style.display = product['declaracion_prestaciones'] ? 'inline-flex' : 'none';
+                
+                // --- LOGICA DE PRECIO ---
+                // Extraer precio del CSV (asumiendo formato europeo "25,50" o "25.50")
+                let rawPrice = product['PVP'] || '0';
+                // Limpiar símbolo de moneda si existe y normalizar separadores
+                rawPrice = rawPrice.replace(/[€$]/g, '').trim();
+                if (rawPrice.includes(',') && rawPrice.includes('.')) {
+                    // Caso complejo 1.234,56 -> quitar puntos, cambiar coma
+                    rawPrice = rawPrice.replace(/\./g, '').replace(',', '.');
+                } else if (rawPrice.includes(',')) {
+                    // Caso estándar 25,50 -> cambiar coma
+                    rawPrice = rawPrice.replace(',', '.');
+                }
+                
+                const pvpFloat = parseFloat(rawPrice) || 0;
+                
+                ui.presuInputs.pvp.value = pvpFloat.toFixed(2);
+                ui.presuInputs.cantidad.value = "0"; // Resetear cantidad al cambiar producto
+                calculateBudget(); // Calcular inicial
+
+                generarTexto();
+            }
+            
+            function generarTexto() {
+                if (selectedProductIndex === null) return;
+                const values = {};
+                for (let el of ui.formulario.elements) { if (el.id) values[el.id] = el.value; }
+                
+                const selectedProductType = values['tipo_material'];
+                let activeTemplate;
+        
+                if (selectedProductType === 'Pavimento pasta roja no rectificado') {
+                    activeTemplate = pavimentoPastaRojaTemplate;
+                } else {
+                    activeTemplate = revestimientoTypes.includes(selectedProductType) ? revestimientoTemplate : pavimentoTemplate;
+                }
+                
+                let textoHTML = activeTemplate;
+                for (const key in values) {
+                    let valorSeguro = values[key] || '[DATO NO ESPECIFICADO]';
+                    if (typeof valorSeguro === 'string') {
+                        valorSeguro = valorSeguro.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    }
+                    textoHTML = textoHTML.replace(new RegExp(`{${key}}`, 'g'), valorSeguro);
+                }
+                ui.output.innerHTML = textoHTML;
+                
+                ui.output.classList.remove('texto-actualizado');
+                void ui.output.offsetWidth;
+                ui.output.classList.add('texto-actualizado');
+            }
+        
+            // --- URL STATE MANAGEMENT ---
+            function updateUrlState() {
+                const params = new URLSearchParams();
+                const keyword = ui.searchKeyword.value.trim();
+                if (keyword) params.set('q', keyword);
+        
+                ui.quickFilters.forEach(qf => {
+                    if (qf.checked) params.set(qf.id.replace('filtro-', ''), 'true');
+                });
+                
+                Object.values(ui.allSelectFilters).forEach(select => {
+                    if (select.value) params.set(select.id.replace('search-', ''), select.value);
+                });
+        
+                const newUrl = `${window.location.pathname}?${params.toString()}`;
+                history.pushState({ path: newUrl }, '', newUrl);
+            }
+        
+            function applyStateFromUrl() {
+                const params = new URLSearchParams(window.location.search);
+                ui.searchKeyword.value = params.get('q') || '';
+                ui.quickFilters.forEach(qf => {
+                    qf.checked = params.get(qf.id.replace('filtro-', '')) === 'true';
+                });
+                Object.values(ui.allSelectFilters).forEach(select => {
+                    const paramValue = params.get(select.id.replace('search-', ''));
+                    if (paramValue) select.value = paramValue;
+                });
+            }
+        
+            // --- LÓGICA DE BÚSQUEDA Y FILTRADO ---
+            function updateFiltersAndProductList() {
+                ui.productResultsList.classList.add('is-loading');
+        
+                setTimeout(() => {
+                    const keyword = ui.searchKeyword.value.trim().toUpperCase();
+                    let filteredProducts = csvData.filter(product => {
+                        const keywordMatch = !keyword || 
+                            (product['Serie'] && product['Serie'].toUpperCase().includes(keyword)) || 
+                            (product['MODELO'] && product['MODELO'].toUpperCase().includes(keyword)) || 
+                            (product['Efecto'] && product['Efecto'].toUpperCase().includes(keyword)) || 
+                            (product['COLOR'] && product['COLOR'].toUpperCase().includes(keyword));
+                        
+                        const is20mm = !document.getElementById('filtro-20mm').checked || (product['Espesor(mm)'] && product['Espesor(mm)'].startsWith('2'));
+                        const isExt = !document.getElementById('filtro-ext').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('EXT'));
+                        const isDup = !document.getElementById('filtro-dup').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('DUP'));
+                        
+                        return keywordMatch && is20mm && isExt && isDup;
+                    });
+        
+                    const activeSelectFilters = {};
+                    Object.keys(ui.allSelectFilters).forEach(key => { if (ui.allSelectFilters[key].value) activeSelectFilters[key] = ui.allSelectFilters[key].value; });
+                    
+                    if (Object.keys(activeSelectFilters).length > 0) {
+                        filteredProducts = filteredProducts.filter(product => Object.keys(activeSelectFilters).every(key => product[key] === activeSelectFilters[key]));
+                    }
+                    
+                    Object.keys(ui.allSelectFilters).forEach(currentKey => {
+                        const otherFilters = { ...activeSelectFilters };
+                        delete otherFilters[currentKey];
+                        const availableProducts = csvData.filter(product => {
+                            const keywordMatch = !keyword || (product['Serie'] && product['Serie'].toUpperCase().includes(keyword)) || (product['MODELO'] && product['MODELO'].toUpperCase().includes(keyword)) || (product['Efecto'] && product['Efecto'].toUpperCase().includes(keyword)) || (product['COLOR'] && product['COLOR'].toUpperCase().includes(keyword));
+                            const quickFiltersPass = (!document.getElementById('filtro-20mm').checked || (product['Espesor(mm)'] && product['Espesor(mm)'].startsWith('2'))) && (!document.getElementById('filtro-ext').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('EXT'))) && (!document.getElementById('filtro-dup').checked || (product['MODELO'] && product['MODELO'].toUpperCase().includes('DUP')));
+                            const otherSelectsPass = Object.keys(otherFilters).every(key => product[key] === otherFilters[key]);
+                            return keywordMatch && quickFiltersPass && otherSelectsPass;
+                        });
+                        repopulateSelectWithOptions(ui.allSelectFilters[currentKey], availableProducts);
+                    });
+                    
+                    renderProductList(filteredProducts);
+                    ui.statusMessage.textContent = `${filteredProducts.length} productos encontrados`;
+                    const hasActiveFilters = ui.searchKeyword.value || ui.quickFilters.some(qf => qf.checked) || Object.values(ui.allSelectFilters).some(s => s.value);
+                    ui.btnClearFilters.classList.toggle('active', hasActiveFilters);
+        
+                    ui.productResultsList.classList.remove('is-loading');
+                }, 10);
+            }
+        
+            function repopulateSelectWithOptions(selectElement, availableProducts) {
+                const currentValue = selectElement.value;
+                const csvCol = selectElement.dataset.csvCol;
+                const counts = availableProducts.reduce((acc, product) => {
+                    const value = product[csvCol];
+                    if (value) acc[value] = (acc[value] || 0) + 1;
+                    return acc;
+                }, {});
+                const sortedOptions = Object.keys(counts).sort();
+                selectElement.innerHTML = `<option value="">Todos (${availableProducts.length})</option>`;
+                sortedOptions.forEach(value => {
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = `${value} (${counts[value]})`;
+                    if (value === currentValue) option.selected = true;
+                    selectElement.appendChild(option);
+                });
+            }
+        
+            function renderProductList(products) {
+                ui.productResultsList.innerHTML = '';
+                if (products.length === 0) {
+                    ui.productResultsList.innerHTML = `<div class="empty-search-state"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg><p>No se encontraron productos con estos filtros.</p></div>`;
+                    return;
+                }
+                products.forEach(product => {
+                    const originalIndex = csvData.findIndex(p => p === product);
+                    const card = document.createElement('div');
+                    card.className = 'product-card';
+                    card.dataset.index = originalIndex;
+        
+                    const imgUrl = product['imagen_url_web'];
+                    let imgHTML = '<div class="card-no-thumb" style="font-size:0.7em; color:#999;">Sin foto</div>';
+                    if (imgUrl && imgUrl.trim() !== "") {
+                        imgHTML = `<img src="${imgUrl}" class="card-thumb" alt="mini" loading="lazy" onerror="this.parentNode.innerHTML='<div class=\'card-no-thumb\'>Error</div>'">`;
+                    }
+        
+                    const typeTag = product['Desc_Familia_web'] ? `<span class="tag">${product['Desc_Familia_web']}</span>` : '';
+                    const classTag = product['en_16165_anexo_c_deslizamiento_pendulo'] ? `<span class="tag">${product['en_16165_anexo_c_deslizamiento_pendulo']}</span>` : '';
+                    let espesorTag = '';
+                    if (product['Espesor(mm)']) {
+                        const espesorCm = parseFloat(product['Espesor(mm)'].replace(',', '.'));
+                        if (!isNaN(espesorCm)) {
+                            espesorTag = `<span class="tag">${(espesorCm * 10).toLocaleString('es-ES')} mm</span>`;
+                        }
+                    }
+        
+                    card.innerHTML = `
+                        <div class="card-thumb-container">${imgHTML}</div>
+                        <div class="card-info">
+                            <h4 class="card-title">${product.MODELO || 'S/M'} - ${product.COLOR || 'S/C'}</h4>
+                            <p class="card-sub">${product.FORMATO || ''} | ${product.Acabado || ''}</p>
+                            <div class="card-tags">${typeTag}${classTag}${espesorTag}</div>
+                        </div>`;
+                    
+                    card.addEventListener('click', () => goToDetailMode(originalIndex));
+                    
+                    const thumbContainer = card.querySelector('.card-thumb-container');
+                    if (imgUrl && imgUrl.trim() !== "") {
+                        thumbContainer.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            openModal(imgUrl);
+                        });
+                    }
+                    ui.productResultsList.appendChild(card);
+                });
+            }
+            
+            function clearFilters() {
+                 ui.searchKeyword.value = '';
+                 ui.quickFilters.forEach(qf => qf.checked = false);
+                 Object.values(ui.allSelectFilters).forEach(select => select.value = '');
+                 updateFiltersAndProductList();
+                 updateUrlState();
+            }
+        
+            // --- CARGA DE DATOS (CSV) ---
+            async function loadDataAndInitializeApp() {
+                const csvFilePath = 'BD-CONTRAC-PRESTO-18-11-2025.csv'; 
+                ui.statusMessage.textContent = 'Cargando catálogo...';
+                
+                let skeletonHTML = '';
+                for (let i = 0; i < 12; i++) {
+                    skeletonHTML += `<div class="skeleton-card"><div class="skeleton-thumb"></div><div class="skeleton-info"><div class="skeleton-line title"></div><div class="skeleton-line"></div></div></div>`;
+                }
+                ui.productResultsList.innerHTML = skeletonHTML;
+                
+                try {
+                    const response = await fetch(csvFilePath);
+                    if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+                    const csvText = await response.text();
+                    csvData = parseCSV(csvText);
+                    if (csvData.length === 0) throw new Error("CSV vacío o inválido.");
+                    
+                    Object.values(ui.allSelectFilters).forEach(select => { select.disabled = false; });
+                    
+                    applyStateFromUrl(); 
+                    updateFiltersAndProductList(); 
+        
+                    // --- DEEP LINKING AL CARGAR ---
+                    const params = new URLSearchParams(window.location.search);
+                    const urlProductId = params.get('producto');
+        
+                    if (urlProductId) {
+                        const foundIndex = csvData.findIndex(p => p['Id.Articulo'] === urlProductId);
+                        if (foundIndex !== -1) {
+                            goToDetailMode(foundIndex);
+                        } else {
+                            console.log("El producto de la URL no existe en este catálogo.");
+                        }
+                    }
+        
+                } catch (error) {
+                    ui.statusMessage.textContent = `Error: No se pudo cargar el catálogo.`;
+                    ui.productResultsList.innerHTML = `<div class="empty-search-state"><p>Error al cargar productos. Verifica el archivo CSV.</p></div>`;
+                    console.error(error);
+                }
+            } // CORRECCION: Llave añadida
+        
+            function parseCSV(text) {
+                const lines = text.trim().split(/\r\n|\n/);
+                if (lines.length < 2) return [];
+                
+                const headerLine = lines[0].replace(/^\uFEFF/, '');
+                const delimiter = (headerLine.match(/;/g) || []).length > (headerLine.match(/,/g) || []).length ? ';' : ',';
+                const headers = headerLine.split(delimiter).map(h => h.trim());
+                
+                const data = [];
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (line === '') continue;
+                    const values = line.split(delimiter);
+                    if (values.length < headers.length) continue;
+                    
+                    if (values.every(val => val.trim() === '')) continue;
+        
+                    const entry = {};
+                    headers.forEach((header, index) => {
+                        entry[header] = values[index] ? values[index].trim() : '';
+                    });
+        
+                    if (!entry['MODELO'] || entry['MODELO'] === "") continue;
+                    data.push(entry);
+                }
+                return data;
+            }
+        
+            // --- EXPORTACIÓN PDF (Mantenida igual) ---
+            async function generarPDF() {
+                if (selectedProductIndex === null) return;
+                ui.btnDescargarPdf.textContent = 'Generando...'; ui.btnDescargarPdf.disabled = true;
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF('p', 'mm', 'a4');
+                    const product = csvData[selectedProductIndex];
+                    const M_LEFT = 20, M_TOP = 20, WIDTH = 170;
+                    let y = M_TOP;
+                    
+                    const imgToBase64 = async (url) => {
+                        if (!url) return null;
+                        try {
+                            const res = await fetch(url); const blob = await res.blob();
+                            return new Promise((r) => { const reader = new FileReader(); reader.onloadend = () => r(reader.result); reader.readAsDataURL(blob); });
+                        } catch { return null; }
+                    };
+                    
+                    const logo = await imgToBase64('LOGO-PAMESA.jpg');
+                    if (logo) doc.addImage(logo, 'JPEG', M_LEFT, 10, 50, 10);
+                    
+                    doc.setFont('helvetica', 'bold'); doc.setFontSize(12); 
+                    doc.text('Prescripción Técnica', 210 - 20, 16, { align: 'right' });
+                    y = 25; 
+                    doc.setDrawColor(206, 23, 25); doc.line(M_LEFT, y, 210-20, y); y += 10;
+                    doc.setFontSize(16); doc.setTextColor(206, 23, 25); 
+                    doc.text(`${product.MODELO} - ${product.COLOR}`, M_LEFT, y); y += 10;
+                    
+                    const prodImg = await imgToBase64(ui.detailImage.src);
+                    let textX = M_LEFT; let textW = WIDTH;
+                    if (prodImg) { 
+                        doc.addImage(prodImg, 'JPEG', M_LEFT, y, 60, 60); 
+                        textX = M_LEFT + 65; textW = WIDTH - 65; 
+                    }
+                    
+                    const rawHTML = ui.output.innerHTML;
+                    const cleanText = rawHTML.replace(/<br\s*\/?>/gi, '\n').replace(/&nbsp;/g, ' ');
+                    const paragraphs = cleanText.split('\n');
+                    doc.setFontSize(9); doc.setTextColor(0,0,0); 
+                    let currentY = y;
+                    
+                    paragraphs.forEach(para => {
+                        if (!para.trim()) { currentY += 4; return; }
+                        if (prodImg && currentY > (y + 65)) { textX = M_LEFT; textW = WIDTH; }
+                        
+                        const parts = para.split(/(<span class="resaltado">.*?<\/span>)/g);
+                        let lineWidth = 0; 
+                        
+                        parts.forEach(part => {
+                            const isBold = part.startsWith('<span'); 
+                            const content = isBold ? part.replace(/<[^>]+>/g, '') : part;
+                            
+                            const words = content.split(' ');
+                            words.forEach(w => {
+                                if(!w) return;
+                                const word = w + ' ';
+                                doc.setFont('helvetica', isBold ? 'bold' : 'normal'); 
+                                doc.setTextColor(isBold ? '#ce1719' : '#333333');
+                                
+                                const wWidth = doc.getStringUnitWidth(word) * 9 / doc.internal.scaleFactor;
+                                if (lineWidth + wWidth > textW) {
+                                    currentY += 4; lineWidth = 0;
+                                    if (prodImg && currentY > (y + 65)) { textX = M_LEFT; textW = WIDTH; }
+                                    if (currentY > 280) { doc.addPage(); currentY = 20; textX = M_LEFT; textW = WIDTH; }
+                                }
+                                doc.text(word, textX + lineWidth, currentY); 
+                                lineWidth += wWidth;
+                            });
+                        });
+                        currentY += 5;
+                    });
+                    
+                    const pages = doc.internal.getNumberOfPages();
+                    for(let i=1; i<=pages; i++) { 
+                        doc.setPage(i); doc.setFontSize(8); doc.setTextColor(150); 
+                        doc.text(`Pág ${i}/${pages} | ${new Date().toLocaleDateString()}`, 105, 290, { align: 'center' }); 
+                    }
+                    
+                    doc.save(`Prescripcion_${product.MODELO}_${product.COLOR}.pdf`);
+                } catch (e) { console.error(e); alert('Error al generar PDF'); } 
+                finally { ui.btnDescargarPdf.textContent = 'PDF'; ui.btnDescargarPdf.disabled = false; }
+            }
+
+            // --- LÓGICA DE PRESUPUESTO ---
+
+            function calculateBudget() {
+                const m2 = parseFloat(ui.presuInputs.cantidad.value) || 0;
+                const merma = parseFloat(ui.presuInputs.merma.value) || 0;
+                const pvp = parseFloat(ui.presuInputs.pvp.value) || 0;
+                const dto = parseFloat(ui.presuInputs.dto.value) || 0;
+                const aplicarIva = ui.presuInputs.ivaCheck.checked;
+
+                // Cálculos
+                const m2Reales = m2 * (1 + (merma / 100));
+                const precioBase = m2Reales * pvp;
+                const descuentoImporte = precioBase * (dto / 100);
+                const subtotal = precioBase - descuentoImporte;
+                const iva = aplicarIva ? (subtotal * 0.21) : 0;
+                const total = subtotal + iva;
+
+                // Actualizar UI
+                ui.presuLabels.totalM2.textContent = m2Reales.toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' m²';
+                ui.presuLabels.subtotal.textContent = subtotal.toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' €';
+                ui.presuLabels.iva.textContent = iva.toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' €';
+                ui.presuLabels.totalFinal.textContent = total.toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' €';
+            }
+
+            // Listeners para recálculo automático
+            Object.values(ui.presuInputs).forEach(input => {
+                input.addEventListener('input', calculateBudget);
+                input.addEventListener('change', calculateBudget); // Para el checkbox
+            });
+
+            // --- GENERACIÓN PDF PRESUPUESTO ---
+            ui.btnGenerarPresupuesto.addEventListener('click', async () => {
+                if (selectedProductIndex === null) return;
+                
+                const m2 = parseFloat(ui.presuInputs.cantidad.value) || 0;
+                if (m2 <= 0) {
+                    alert("Por favor, introduce una cantidad de m² válida.");
+                    ui.presuInputs.cantidad.focus();
+                    return;
+                }
+
+                const btn = ui.btnGenerarPresupuesto;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = 'Generando...';
+                btn.disabled = true;
+
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF('p', 'mm', 'a4');
+                    const product = csvData[selectedProductIndex];
+                    
+                    // Variables de cálculo
+                    const merma = parseFloat(ui.presuInputs.merma.value) || 0;
+                    const m2Reales = m2 * (1 + (merma / 100));
+                    const pvp = parseFloat(ui.presuInputs.pvp.value) || 0;
+                    const dto = parseFloat(ui.presuInputs.dto.value) || 0;
+                    const aplicarIva = ui.presuInputs.ivaCheck.checked;
+                    const descuentoImporte = (m2Reales * pvp) * (dto / 100);
+                    const subtotal = (m2Reales * pvp) - descuentoImporte;
+                    const iva = aplicarIva ? (subtotal * 0.21) : 0;
+                    const total = subtotal + iva;
+                    const cliente = ui.presuInputs.cliente.value || "Cliente General";
+                    const fecha = new Date().toLocaleDateString('es-ES');
+
+                    // --- DIBUJAR PDF ---
+                    const M_LEFT = 20;
+                    let y = 20;
+
+                    // 1. Cabecera
+                    const imgToBase64 = async (url) => {
+                        try {
+                            const res = await fetch(url); const blob = await res.blob();
+                            return new Promise((r) => { const reader = new FileReader(); reader.onloadend = () => r(reader.result); reader.readAsDataURL(blob); });
+                        } catch { return null; }
+                    };
+                    const logo = await imgToBase64('LOGO-PAMESA.jpg');
+                    if (logo) doc.addImage(logo, 'JPEG', M_LEFT, 10, 50, 10); // Ajustar tamaño según logo real
+
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(18);
+                    doc.setTextColor(206, 23, 25); // Rojo Pamesa
+                    doc.text('PRESUPUESTO', 210 - 20, 20, { align: 'right' });
+                    
+                    doc.setFontSize(10);
+                    doc.setTextColor(100);
+                    doc.text(`Fecha: ${fecha}`, 210 - 20, 26, { align: 'right' });
+                    doc.text(`Ref: PRES-${Math.floor(Math.random()*10000)}`, 210 - 20, 31, { align: 'right' });
+
+                    y = 45;
+
+                    // 2. Datos Cliente
+                    doc.setDrawColor(220);
+                    doc.setFillColor(245, 245, 245);
+                    doc.rect(M_LEFT, y, 170, 20, 'F');
+                    doc.setFontSize(10);
+                    doc.setTextColor(0);
+                    doc.text('DATOS DEL CLIENTE / PROYECTO:', M_LEFT + 5, y + 6);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(cliente, M_LEFT + 5, y + 14);
+
+                    y += 35;
+
+                    // 3. Tabla (Cabecera)
+                    doc.setFillColor(206, 23, 25);
+                    doc.rect(M_LEFT, y, 170, 8, 'F');
+                    doc.setTextColor(255);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(9);
+                    doc.text('DESCRIPCIÓN', M_LEFT + 2, y + 5);
+                    doc.text('CANTIDAD', 120, y + 5, { align: 'right' });
+                    doc.text('PRECIO', 145, y + 5, { align: 'right' });
+                    doc.text('TOTAL', 185, y + 5, { align: 'right' });
+
+                    y += 12;
+
+                    // 4. Tabla (Contenido)
+                    doc.setTextColor(0);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(`${product.MODELO} - ${product.COLOR}`, M_LEFT + 2, y);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(8);
+                    doc.text(`${product.FORMATO} | ${product.Acabado}`, M_LEFT + 2, y + 4);
+                    
+                    if (merma > 0) {
+                        doc.setTextColor(100);
+                        doc.text(`(Incluye ${m2.toFixed(2)} m² + ${merma}% merma)`, M_LEFT + 2, y + 8);
+                        doc.setTextColor(0);
+                    }
+
+                    // Valores Numéricos Línea
+                    doc.setFontSize(9);
+                    doc.text(`${m2Reales.toLocaleString('es-ES', {minimumFractionDigits: 2})} m²`, 120, y + 4, { align: 'right' });
+                    doc.text(`${pvp.toLocaleString('es-ES', {minimumFractionDigits: 2})} €`, 145, y + 4, { align: 'right' });
+                    
+                    let totalLinea = m2Reales * pvp;
+                    doc.text(`${totalLinea.toLocaleString('es-ES', {minimumFractionDigits: 2})} €`, 185, y + 4, { align: 'right' });
+
+                    // Descuento si existe
+                    if (dto > 0) {
+                        y += 12;
+                        doc.setTextColor(100);
+                        doc.text(`Descuento aplicado (${dto}%)`, 145, y, { align: 'right' });
+                        doc.text(`-${descuentoImporte.toLocaleString('es-ES', {minimumFractionDigits: 2})} €`, 185, y, { align: 'right' });
+                    }
+
+                    y += 5;
+                    doc.setDrawColor(200);
+                    doc.line(M_LEFT, y, 190, y); // Línea separadora
+                    y += 10;
+
+                    // 5. Totales (Alineados a la derecha)
+                    const xLabel = 145;
+                    const xValue = 185;
+                    
+                    doc.setTextColor(0);
+                    doc.text('Base Imponible:', xLabel, y, { align: 'right' });
+                    doc.text(`${subtotal.toLocaleString('es-ES', {minimumFractionDigits: 2})} €`, xValue, y, { align: 'right' });
+                    y += 6;
+
+                    if (aplicarIva) {
+                        doc.text('IVA (21%):', xLabel, y, { align: 'right' });
+                        doc.text(`${iva.toLocaleString('es-ES', {minimumFractionDigits: 2})} €`, xValue, y, { align: 'right' });
+                        y += 8;
+                    } else {
+                        y += 2;
+                    }
+
+                    // Total Final Grande
+                    doc.setFontSize(12);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(206, 23, 25);
+                    doc.text('TOTAL:', xLabel, y, { align: 'right' });
+                    doc.text(`${total.toLocaleString('es-ES', {minimumFractionDigits: 2})} €`, xValue, y, { align: 'right' });
+
+                    // 6. Imagen del producto (Miniatura)
+                    if (ui.detailImage.src) {
+                        const prodImg = await imgToBase64(ui.detailImage.src);
+                        if (prodImg) {
+                            doc.addImage(prodImg, 'JPEG', M_LEFT, y - 20, 30, 30);
+                        }
+                    }
+
+                    // 7. Footer Legal
+                    doc.setFontSize(7);
+                    doc.setTextColor(150);
+                    doc.text('Este documento es un presupuesto estimativo generado automáticamente. No tiene valor contractual definitivo hasta su validación por el departamento comercial. Precios sujetos a cambios sin previo aviso. Pamesa Cerámica.', 105, 280, { align: 'center' });
+
+                    // Guardar
+                    const safeName = (cliente || 'Presupuesto').replace(/[^a-z0-9]/gi, '_');
+                    doc.save(`${safeName}_${product.MODELO}.pdf`);
+
+                } catch (e) {
+                    console.error(e);
+                    alert('Error al generar el presupuesto PDF');
+                } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            });
+        
+            // --- EVENTOS Y LISTENERS ---
+            ui.loginButton.addEventListener('click', handleLogin);
+            [ui.loginUsername, ui.loginPassword].forEach(el => el.addEventListener('keyup', (e) => { if (e.key === 'Enter') handleLogin(); }));
+            ui.logoutLink.addEventListener('click', (e) => { e.preventDefault(); handleLogout(); });
+        
+            ui.btnBackSearch.addEventListener('click', goToSearchMode);
+            ui.btnClearFilters.addEventListener('click', clearFilters);
+            
+            // Filtros en tiempo real
+            const updateAll = () => { updateFiltersAndProductList(); updateUrlState(); };
+            ui.searchKeyword.addEventListener('input', updateAll);
+            ui.quickFilters.forEach(el => el.addEventListener('change', updateAll));
+            Object.values(ui.allSelectFilters).forEach(el => el.addEventListener('change', updateAll));
+        
+            // Actualización de texto
+            Array.from(ui.formulario.elements).forEach(el => el.addEventListener('input', generarTexto));
+            
+            // Botones de acción
+            ui.btnCopiar.addEventListener('click', () => {
+                savePrescriptionToHistory();
+                navigator.clipboard.writeText(ui.output.textContent);
+                const prev = ui.btnCopiar.textContent;
+                ui.btnCopiar.textContent = '¡Copiado!';
+                ui.btnCopiar.style.backgroundColor = '#10b981'; // Green
+                setTimeout(() => { ui.btnCopiar.textContent = prev; ui.btnCopiar.style.backgroundColor = ''; }, 1500);
+            });
+        
+            ui.btnDescargarTxt.addEventListener('click', () => {
+                savePrescriptionToHistory();
+                const blob = new Blob([ui.output.textContent], {type: 'text/plain'});
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob); a.download = 'prescripcion.txt'; a.click();
+            });
+        
+            ui.btnDescargarPdf.addEventListener('click', () => {
+                savePrescriptionToHistory();
+                generarPDF();
+            });
+        
+            ui.btnDescargarImagen.addEventListener('click', async () => {
+                const url = ui.detailImage.src; if(!url) return;
+                try {
+                    const res = await fetch(url); const blob = await res.blob();
+                    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+                    a.download = 'imagen_producto.jpg'; a.click();
+                } catch { window.open(url, '_blank'); }
+            });
+        
+            // Modal
+            function openModal(url) { if(url) { ui.modalImage.src = url; ui.modalOverlay.classList.add('visible'); } }
+            function closeModal() { ui.modalOverlay.classList.remove('visible'); setTimeout(() => ui.modalImage.src='', 300); }
+            
+            ui.detailImageContainer.addEventListener('click', () => { if(ui.detailImage.src) openModal(ui.detailImage.src); });
+            ui.modalCloseBtn.addEventListener('click', closeModal);
+            ui.modalOverlay.addEventListener('click', (e) => { if (e.target === ui.modalOverlay) closeModal(); });
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+        
+            document.getElementById('texto-generado').addEventListener('copy', () => {
+                savePrescriptionToHistory();
+            });
+        
+            // BOTONES NAVEGADOR (ATRAS/ADELANTE)
+            window.addEventListener('popstate', (event) => {
+                const params = new URLSearchParams(window.location.search);
+                const urlProductId = params.get('producto');
+        
+                if (urlProductId) {
+                    const foundIndex = csvData.findIndex(p => p['Id.Articulo'] === urlProductId);
+                    if (foundIndex !== -1) {
+                        selectedProductIndex = foundIndex;
+                        populateDetailView(csvData[foundIndex]);
+                        ui.viewSearch.classList.remove('active-view');
+                        ui.viewDetail.classList.add('active-view');
+                    }
+                } else {
+                    ui.viewDetail.classList.remove('active-view');
+                    ui.viewSearch.classList.add('active-view');
+                }
+            });
+        
+            // Inicialización
+            checkLogin();
+            ui.viewSearch.classList.add('active-view');
+        });
+        </script>
+</body>
+</html>
